@@ -73,7 +73,7 @@ class CoinbaseProHandler():
         }
 
         response = requests.post(
-            self.api_url + 'withdrawals/payment-method',
+            self.api_url + 'deposits/payment-method',
             data=json.dumps(deposit_request),
             auth=self.auth
         )
@@ -160,6 +160,21 @@ class CoinbaseProHandler():
             return False
 
 
+    def get_fills(self):
+        fill_parameters = {
+            "product_id": "BTC-USD",
+        }
+
+        response = requests.get(
+            self.api_url + "fills",
+            params=fill_parameters,
+            auth=self.auth
+        )
+
+        r = response.json()
+        print(json.dumps(r, indent=4, sort_keys=True))
+
+
     def record_transaction(self, transaction_type, transaction_details):
         """
             Sends the current transaction's details into
@@ -188,7 +203,7 @@ def main():
     day_of_purchase = "Friday"
     time_of_deposit = "9:55AM"
     time_of_purchase = "10:00AM"
-
+    
     # Leave this running forever.
     while True:
         # Get the current day and time.
@@ -199,13 +214,21 @@ def main():
         # If our conditions are met, initiate transactions.
         if current_day == day_of_purchase:
             if current_time == time_of_deposit:
+                # Deposit from bank.
+                print("depositing")
                 coinbase_pro.deposit_from_bank(50.00)
+                # Important to pause for >1 min so this doesn't repeat!
                 time.sleep(60)
             elif current_time == time_of_purchase:
+                # Place market orders.
+                print("placing orders")
                 coinbase_pro.place_market_order("ADA", 10.00)
                 coinbase_pro.place_market_order("BTC", 20.00)
                 coinbase_pro.place_market_order("ETH", 20.00)
+                # Important to pause for >1 min so this doesn't repeat!
                 time.sleep(60)
+        
+        time.sleep(1)
 
 
 if __name__ == "__main__":
