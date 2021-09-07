@@ -1,6 +1,7 @@
-import datetime, json, hmac, hashlib, time, requests, base64
+import datetime, json, hmac, hashlib, time, requests, base64, smtplib
+from email.message import EmailMessage
 from requests.auth import AuthBase
-from config import CB_API_KEY, CB_API_SECRET, CB_API_PASS
+from config import CB_API_KEY, CB_API_SECRET, CB_API_PASS, EMAIL_ADDRESS, EMAIL_PASSWORD
 
 # Create custom authentication for Exchange
 class CoinbaseExchangeAuth(AuthBase):
@@ -160,9 +161,20 @@ class CoinbaseProHandler():
             return False
 
 
-    def get_fills(self):
+    def get_transaction_details(self, product, start_date):
+        """
+            Retrieves the JSON response of the transaction details.
+
+            :param product: The cyptocurrency in question.
+            :type product: str
+            :param start_date: The date the transaction took place.
+            :type start_date: str in "yyyy-mm-dd" format
+            :returns: dictionary of parsed JSON responses
+
+        """
         fill_parameters = {
-            "product_id": "BTC-USD",
+            "product_id": product + "-USD",
+            "start_date": start_date
         }
 
         response = requests.get(
@@ -171,23 +183,57 @@ class CoinbaseProHandler():
             auth=self.auth
         )
 
-        r = response.json()
-        print(json.dumps(r, indent=4, sort_keys=True))
+        print(json.dumps(response.json(), indent=4, sort_keys=True))
 
+        # Parse the JSON response
+        transaction = response.json()[0]
 
-    def record_transaction(self, transaction_type, transaction_details):
-        """
-            Sends the current transaction's details into
-            a database.
+        coinbase_fee = round(float(transaction["fee"]), 2)
+        amount_invested = round(float(transaction["usd_volume"]), 2)
+        purchase_price = round(float(transaction["price"]), 2)
+        purchase_amount = transaction["size"]
         
-            :param transaction_type: The kind of transaction that occurred.
-            :type transaction_type: str
-            :param transaction_details: The JSON response of the transaction.
-            :type transaction_details: JSON
-            :return: None
-        """
+        parsed_transaction = {
+            "product": product,
+            "start_date": start_date,
+            "coinbase_fee": "%.2f" % coinbase_fee,
+            "amount_invested": "%.2f" % amount_invested,
+            "purchase_price": "%.2f" % purchase_price,
+            "purchase_amount": purchase_amount,
+            "total_amount": "%.2f" % (coinbase_fee + amount_invested)
+        }
 
-        pass
+        return parsed_transaction
+
+
+def send_email(transaction_details):
+
+    product = transaction_details["product"]
+    start_date = transaction_details["start_date"]
+    coinbase_fee = transaction_details["coinbase_fee"]
+    amount_invested = transaction_details["amount_invested"]
+    purchase_price = transaction_details["purchase_price"]
+    purchase_amount = transaction_details["purchase_amount"]
+    total_amount = transaction_details["total_amount"]
+
+    msg = EmailMessage()
+    msg['Subject'] = f"Your Purchase of ${total_amount} of {product} Was Successful!"
+    msg['From'] = EMAIL_ADDRESS
+    msg['To'] = EMAIL_ADDRESS
+
+    content = f'Hello,\n\n You successfully placed your order! Please see below details:\n\n \
+        Amount Purchased: {purchase_amount} {product}\n \
+        Purchase Price: ${purchase_price}\n \
+        Total Amount: ${total_amount}\n \
+        Amount Invested: ${amount_invested}\n \
+        Coinbase Fees: ${coinbase_fee}\n \
+        Date: {start_date}'
+
+    msg.set_content(content)
+
+    with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
+        smtp.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+        smtp.send_message(msg)
 
 
 def main():
@@ -210,21 +256,26 @@ def main():
         now = datetime.datetime.now()
         current_day = now.strftime("%A")
         current_time = now.strftime("%I:%M%p")
+        todays_date = now.isoformat()[:10]
 
         # If our conditions are met, initiate transactions.
         if current_day == day_of_purchase:
             if current_time == time_of_deposit:
                 # Deposit from bank.
-                print("depositing")
+                print("depositing. . . . .")
                 coinbase_pro.deposit_from_bank(50.00)
                 # Important to pause for >1 min so this doesn't repeat!
                 time.sleep(60)
             elif current_time == time_of_purchase:
                 # Place market orders.
-                print("placing orders")
-                coinbase_pro.place_market_order("ADA", 10.00)
-                coinbase_pro.place_market_order("BTC", 20.00)
-                coinbase_pro.place_market_order("ETH", 20.00)
+                print("placing orders. . . . .")
+
+                for product in ["BTC", "ADA", "ETH"]:
+                    amount = 10.00 if product == "ADA" else 20.00
+                    coinbase_pro.place_market_order(product, amount)
+                    transaction_details = coinbase_pro.get_transaction_details(product, todays_date)
+                    send_email(transaction_details)
+
                 # Important to pause for >1 min so this doesn't repeat!
                 time.sleep(60)
         
