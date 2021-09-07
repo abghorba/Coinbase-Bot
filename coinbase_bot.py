@@ -207,6 +207,14 @@ class CoinbaseProHandler():
 
 
 def send_email(transaction_details):
+    """
+        Send's user an email with transaction details.
+
+        :param transaction_details: Dictionary of transaction details
+        :type transaction_details: dict
+        :returns: None
+        
+    """
 
     product = transaction_details["product"]
     start_date = transaction_details["start_date"]
