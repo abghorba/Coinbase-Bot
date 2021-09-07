@@ -36,3 +36,11 @@ specifications:
 
 Make sure time_of_deposit occurs before time_of_purchase otherwise, the market
 orders will not go through.
+
+If an order is successful, you can receive emails to notify you. To do this,
+in your config.py file, add in the following:
+
+                EMAIL_ADDRESS = ''
+                EMAIL_PASSWORD = ''
+
+You may need to adjust security settings on your email account for this.
