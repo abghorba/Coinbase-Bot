@@ -183,8 +183,6 @@ class CoinbaseProHandler():
             auth=self.auth
         )
 
-        print(json.dumps(response.json(), indent=4, sort_keys=True))
-
         # Parse the JSON response
         transaction = response.json()[0]
 
@@ -213,7 +211,7 @@ def send_email(transaction_details):
         :param transaction_details: Dictionary of transaction details
         :type transaction_details: dict
         :returns: None
-        
+
     """
 
     product = transaction_details["product"]
@@ -257,7 +255,7 @@ def main():
     day_of_purchase = "Friday"
     time_of_deposit = "9:55AM"
     time_of_purchase = "10:00AM"
-    
+
     # Leave this running forever.
     while True:
         # Get the current day and time.
