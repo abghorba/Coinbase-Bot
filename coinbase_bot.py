@@ -253,8 +253,13 @@ def main():
     # Set your variables. 
     # Make sure time_of_deposit occurs before time_of_purchase.
     day_of_purchase = "Friday"
-    time_of_deposit = "9:55AM"
+    time_of_deposit = "09:55AM"
     time_of_purchase = "10:00AM"
+    purchase_amounts = {
+        "BTC": 20.00,
+        "ETH": 20.00,
+        "ADA": 10.00
+    }
 
     # Leave this running forever.
     while True:
@@ -276,16 +281,13 @@ def main():
                 # Place market orders.
                 print("placing orders. . . . .")
 
-                for product in ["BTC", "ADA", "ETH"]:
-                    amount = 10.00 if product == "ADA" else 20.00
+                for product, amount in purchase_amounts.items():
                     coinbase_pro.place_market_order(product, amount)
                     transaction_details = coinbase_pro.get_transaction_details(product, todays_date)
                     send_email(transaction_details)
 
                 # Important to pause for >1 min so this doesn't repeat!
                 time.sleep(60)
-        
-        time.sleep(1)
 
 
 if __name__ == "__main__":
