@@ -184,6 +184,7 @@ class CoinbaseProHandler():
         )
 
         # Parse the JSON response
+        print(response.json())
         transaction = response.json()[0]
 
         coinbase_fee = round(float(transaction["fee"]), 2)
@@ -204,7 +205,7 @@ class CoinbaseProHandler():
         return parsed_transaction
 
 
-def send_email(transaction_details):
+def send_email_confirmation(transaction_details):
     """
         Send's user an email with transaction details.
 
@@ -252,11 +253,12 @@ def main():
 
     # Set your variables. 
     # Make sure time_of_deposit occurs before time_of_purchase.
+    deposit_amount = 50.00
     day_of_purchase = "Friday"
-    time_of_deposit = "09:55AM"
-    time_of_purchase = "10:00AM"
+    time_of_deposit = "10:05AM"
+    time_of_purchase = "10:13AM"
     purchase_amounts = {
-        "BTC": 20.00,
+        #"BTC": 20.00,
         "ETH": 20.00,
         "ADA": 10.00
     }
@@ -274,7 +276,7 @@ def main():
             if current_time == time_of_deposit:
                 # Deposit from bank.
                 print("depositing. . . . .")
-                coinbase_pro.deposit_from_bank(50.00)
+                coinbase_pro.deposit_from_bank(deposit_amount)
                 # Important to pause for >1 min so this doesn't repeat!
                 time.sleep(60)
             elif current_time == time_of_purchase:
@@ -283,8 +285,11 @@ def main():
 
                 for product, amount in purchase_amounts.items():
                     coinbase_pro.place_market_order(product, amount)
+
+                    # Pause between placing the order and sending email
+                    time.sleep(3)
                     transaction_details = coinbase_pro.get_transaction_details(product, todays_date)
-                    send_email(transaction_details)
+                    send_email_confirmation(transaction_details)
 
                 # Important to pause for >1 min so this doesn't repeat!
                 time.sleep(60)
