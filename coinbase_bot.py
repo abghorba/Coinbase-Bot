@@ -253,14 +253,15 @@ def main():
 
     # Set your variables. 
     # Make sure time_of_deposit occurs before time_of_purchase.
-    deposit_amount = 50.00
+    deposit_amount = 60.00
     day_of_purchase = "Friday"
-    time_of_deposit = "10:05AM"
-    time_of_purchase = "10:13AM"
+    time_of_deposit = "10:00AM"
+    time_of_purchase = "10:02AM"
     purchase_amounts = {
-        #"BTC": 20.00,
+        "BTC": 20.00,
         "ETH": 20.00,
-        "ADA": 10.00
+        "ADA": 10.00,
+        "SHIB": 10.00
     }
 
     # Leave this running forever.
@@ -281,12 +282,13 @@ def main():
                 time.sleep(60)
             elif current_time == time_of_purchase:
                 # Place market orders.
-                print("placing orders. . . . .")
-
                 for product, amount in purchase_amounts.items():
+                    print(f"Placing order for {product}...")
                     coinbase_pro.place_market_order(product, amount)
 
                     # Pause between placing the order and sending email
+                    # this will give time for the Coinbase API to update
+                    # and store the transaction information.
                     time.sleep(3)
                     transaction_details = coinbase_pro.get_transaction_details(product, todays_date)
                     send_email_confirmation(transaction_details)
