@@ -25,16 +25,22 @@ Store this information in a config.py file like so:
         CB_API_SECRET = ''
         CB_API_PASS = ''
 
-Now, you are able to configure your main() function in coinbase_bot.py
+Now, you are able to configure your main() function in place_order.py
 to your own specifications. At the moment, the main() function is set to
 weekly purchases on Fridays at 10:00AM. Change these variables to your own
 specifications:
 
+            deposit_amount = <number in USD format>
             day_of_purchase = <day of the week>
             time_of_deposit = <time in format hh:mm with AM or PM appended>
             time_of_purchase = <time in format hh:mm with AM or PM appended>
+            orders = {
+                    <cyrpto> : <purchase amount in USD format>,
+                    <crypto> : <purchase amount in USD format>,
+                    . . . .
+            }
 
-Make sure time_of_deposit occurs before time_of_purchase otherwise, the market
+Make sure time_of_deposit occurs before time_of_purchase otherwise the market
 orders will not go through.
 
 If an order is successful, you can receive emails to notify you. To do this,

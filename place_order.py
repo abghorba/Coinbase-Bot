@@ -4,23 +4,23 @@ from config import CB_API_KEY, CB_API_SECRET, CB_API_PASS
 
 
 def main():
+    # Configure your variables here.
+    # Make sure time_of_deposit occurs before time_of_purchase.
+    deposit_amount = 50.00
+    day_of_purchase = "Friday"
+    time_of_deposit = "9:58AM"
+    time_of_purchase = "10:00AM"
+    orders = {
+        "BTC": 20.00,
+        "ETH": 20.00,
+        "SHIB": 10.00,
+    }
+
     # Initialize the CoinbaseProHandler object.
     coinbase_pro = CoinbaseProHandler(
         api_url="https://api.pro.coinbase.com/",
         auth=CoinbaseExchangeAuth(CB_API_KEY, CB_API_SECRET, CB_API_PASS)
     )
-
-    # Set your variables. 
-    # Make sure time_of_deposit occurs before time_of_purchase.
-    deposit_amount = 50.00
-    day_of_purchase = "Friday"
-    time_of_deposit = "10:00AM"
-    time_of_purchase = "10:02AM"
-    purchase_amounts = {
-        "BTC": 20.00,
-        "ETH": 20.00,
-        "SHIB": 10.00,
-    }
 
     # Leave this running forever.
     while True:
@@ -40,7 +40,7 @@ def main():
                 time.sleep(60)
             elif current_time == time_of_purchase:
                 # Place market orders.
-                for product, amount in purchase_amounts.items():
+                for product, amount in orders.items():
                     print(f"Placing order for {product}...")
                     coinbase_pro.place_market_order(product, amount)
 
@@ -58,7 +58,6 @@ def main():
 
                 # Important to pause for >1 min so this doesn't repeat!
                 time.sleep(60)
-
 
 if __name__ == "__main__":
     main()

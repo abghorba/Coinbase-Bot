@@ -4,7 +4,7 @@ from email.message import EmailMessage
 from requests.auth import AuthBase
 
 
-# Create custom authentication for Exchange
+# Create custom authentication for Exchange.
 class CoinbaseExchangeAuth(AuthBase):
     def __init__(self, api_key, secret_key, passphrase):
         self.api_key = api_key
@@ -110,7 +110,7 @@ class CoinbaseProHandler():
         Parameters
         ----------
         product : str
-            The cryptocurrency to purchase. Valid values:
+            The cryptocurrency to purchase.
         amount : float
             The amount of USD to make a purchase with.
 
