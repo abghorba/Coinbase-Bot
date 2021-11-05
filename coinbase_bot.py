@@ -1,7 +1,8 @@
-import datetime, json, hmac, hashlib, time, requests, base64, smtplib
+import json, hmac, hashlib, smtplib, time, requests, base64
+from config import EMAIL_ADDRESS, EMAIL_PASSWORD
 from email.message import EmailMessage
 from requests.auth import AuthBase
-from config import CB_API_KEY, CB_API_SECRET, CB_API_PASS, EMAIL_ADDRESS, EMAIL_PASSWORD
+
 
 # Create custom authentication for Exchange
 class CoinbaseExchangeAuth(AuthBase):
@@ -36,12 +37,18 @@ class CoinbaseProHandler():
 
     def get_payment_method(self):
         """
-            Retrieves the user's bank from Coinbase Pro
-            profile.
+        Retrieves the user's bank from Coinbase Pro
+        profile.
 
-            :return: str or None
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        payment_id : str or None
+            The user's bank ID.
         """
-
         response = requests.get(
             self.api_url + 'payment-methods', 
             auth=self.auth
@@ -58,14 +65,20 @@ class CoinbaseProHandler():
 
     def deposit_from_bank(self, amount):
         """
-            Deposits USD from user's bank account
-            into their USD Wallet on Coinbase Pro.
+        Deposits USD from user's bank account
+        into their USD Wallet on Coinbase Pro.
 
-            :param amount: The amount of USD to deposit.
-            :type amount: float
-            :return: bool
-        
+        Parameters
+        ----------
+        amount : float
+            The amount of USD to deposit.
+
+        Returns
+        -------
+        success : bool
+            True if the deposit is successful. 
         """
+        success = False
 
         deposit_request = {
             'amount': amount,
@@ -81,63 +94,39 @@ class CoinbaseProHandler():
 
         if response:
             print(f"Successfully deposited ${amount} to Coinbase Pro account.")
-            return True
+            success = True
         else:
             print("Could not make deposit to Coinbase Pro account.")
             print(response.content)
-            return False
 
-
-    def withdraw_to_bank(self, amount):
-        """
-            Withdraws the specified amount to the
-            user's bank account.
-
-            :param amount: The amount to be withdrawn.
-            :type amount: float
-            :return: bool
-        """
-
-        withdrawal_request = {
-            "amount": amount,
-            "curency": "USD",
-            "payment_method_id": self.get_payment_method()
-        }
-
-        response = requests.post(
-            self.api_url + 'withdrawals/payment-method',
-            data=json.dumps(withdrawal_request),
-            auth=self.auth
-        )
-
-        if response:
-            print(f"Successfully withdrew ${amount} to bank.")
-            return True
-        else:
-            print("Could not make withdrawal to bank.")
-            print(response.content)
-            return False
+        return success
 
 
     def place_market_order(self, product, amount):
         """
-            Places a market order for specified
-            product with a specified amount of USD.
+        Places a market order for specified
+        product with a specified amount of USD.
 
-            :param product: The cryptocurrency to purchase.
-            :type product: str
-            :param amount: The amount of USD to purchase with.
-            :type amount: float
-            :return: bool
-        
+        Parameters
+        ----------
+        product : str
+            The cryptocurrency to purchase. Valid values:
+        amount : float
+            The amount of USD to make a purchase with.
+
+        Returns
+        -------
+        success : boolean
+            True if the market order is successfully executed.
         """
+        success = False
 
         if not product:
             print("Please specify product.")
-            return False
+            return success
         elif not amount:
             print("Please specify amount.")
-            return False
+            return success
 
         market_order = {
             "type": "market",
@@ -154,23 +143,29 @@ class CoinbaseProHandler():
 
         if response:
             print(f"Successfully made a market order for ${amount} of {product}.")
-            return True
+            success = True
         else:
             print("Could not place market order.")
             print(response.content)
-            return False
+        
+        return success
 
 
     def get_transaction_details(self, product, start_date):
         """
-            Retrieves the JSON response of the transaction details.
+        Retrieves the JSON response of the transaction details.
 
-            :param product: The cyptocurrency in question.
-            :type product: str
-            :param start_date: The date the transaction took place.
-            :type start_date: str in "yyyy-mm-dd" format
-            :returns: dictionary of parsed JSON responses
+        Parameters
+        ----------
+        product : str
+            The cyptocurrency to get transaction details of.
+        start_date: str
+            String in "yyyy-mm-dd" format.
 
+        Returns
+        -------
+        parsed_transaction : dict
+            Extracted details from the retrieved JSON.
         """
         fill_parameters = {
             "product_id": product + "-USD",
@@ -204,98 +199,53 @@ class CoinbaseProHandler():
 
         return parsed_transaction
 
+    
+    def send_email_confirmation(self, transaction_details):
+        """
+        Send's user a confirmation email with
+        the details of the transaction.  
 
-def send_email_confirmation(transaction_details):
-    """
-        Send's user an email with transaction details.
+        Parameters
+        ----------
+        transaction_details : str
+            Dictionary of transaction details.
 
-        :param transaction_details: Dictionary of transaction details
-        :type transaction_details: dict
-        :returns: None
+        Returns
+        -------
+        success : bool
+            True if the email is sent successfully.     
+        """
+        success = False
 
-    """
+        if not transaction_details:
+            return success
 
-    product = transaction_details["product"]
-    start_date = transaction_details["start_date"]
-    coinbase_fee = transaction_details["coinbase_fee"]
-    amount_invested = transaction_details["amount_invested"]
-    purchase_price = transaction_details["purchase_price"]
-    purchase_amount = transaction_details["purchase_amount"]
-    total_amount = transaction_details["total_amount"]
+        product = transaction_details["product"]
+        start_date = transaction_details["start_date"]
+        coinbase_fee = transaction_details["coinbase_fee"]
+        amount_invested = transaction_details["amount_invested"]
+        purchase_price = transaction_details["purchase_price"]
+        purchase_amount = transaction_details["purchase_amount"]
+        total_amount = transaction_details["total_amount"]
 
-    msg = EmailMessage()
-    msg['Subject'] = f"Your Purchase of ${total_amount} of {product} Was Successful!"
-    msg['From'] = EMAIL_ADDRESS
-    msg['To'] = EMAIL_ADDRESS
+        msg = EmailMessage()
+        msg['Subject'] = f"Your Purchase of ${total_amount} of {product} Was Successful!"
+        msg['From'] = EMAIL_ADDRESS
+        msg['To'] = EMAIL_ADDRESS
 
-    content = f'Hello,\n\n You successfully placed your order! Please see below details:\n\n \
-        Amount Purchased: {purchase_amount} {product}\n \
-        Purchase Price: ${purchase_price}\n \
-        Total Amount: ${total_amount}\n \
-        Amount Invested: ${amount_invested}\n \
-        Coinbase Fees: ${coinbase_fee}\n \
-        Date: {start_date}'
+        content = f'Hello,\n\n You successfully placed your order! Please see below details:\n\n \
+            Amount Purchased: {purchase_amount} {product}\n \
+            Purchase Price: ${purchase_price}\n \
+            Total Amount: ${total_amount}\n \
+            Amount Invested: ${amount_invested}\n \
+            Coinbase Fees: ${coinbase_fee}\n \
+            Date: {start_date}'
 
-    msg.set_content(content)
+        msg.set_content(content)
 
-    with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
-        smtp.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
-        smtp.send_message(msg)
-
-
-def main():
-
-    # Initialize the CoinbaseProHandler object.
-    coinbase_pro = CoinbaseProHandler(
-        api_url="https://api.pro.coinbase.com/",
-        auth=CoinbaseExchangeAuth(CB_API_KEY, CB_API_SECRET, CB_API_PASS)
-    )
-
-    # Set your variables. 
-    # Make sure time_of_deposit occurs before time_of_purchase.
-    deposit_amount = 60.00
-    day_of_purchase = "Friday"
-    time_of_deposit = "10:00AM"
-    time_of_purchase = "10:02AM"
-    purchase_amounts = {
-        "BTC": 20.00,
-        "ETH": 20.00,
-        "ADA": 10.00,
-        "SHIB": 10.00
-    }
-
-    # Leave this running forever.
-    while True:
-        # Get the current day and time.
-        now = datetime.datetime.now()
-        current_day = now.strftime("%A")
-        current_time = now.strftime("%I:%M%p")
-        todays_date = now.isoformat()[:10]
-
-        # If our conditions are met, initiate transactions.
-        if current_day == day_of_purchase:
-            if current_time == time_of_deposit:
-                # Deposit from bank.
-                print("depositing. . . . .")
-                coinbase_pro.deposit_from_bank(deposit_amount)
-                # Important to pause for >1 min so this doesn't repeat!
-                time.sleep(60)
-            elif current_time == time_of_purchase:
-                # Place market orders.
-                for product, amount in purchase_amounts.items():
-                    print(f"Placing order for {product}...")
-                    coinbase_pro.place_market_order(product, amount)
-
-                    # Pause between placing the order and sending email
-                    # this will give time for the Coinbase API to update
-                    # and store the transaction information.
-                    time.sleep(3)
-                    transaction_details = coinbase_pro.get_transaction_details(product, todays_date)
-                    send_email_confirmation(transaction_details)
-
-                # Important to pause for >1 min so this doesn't repeat!
-                time.sleep(60)
-
-
-if __name__ == "__main__":
-    main()
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
+            smtp.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+            smtp.send_message(msg)
+            success = True
+        
+        return success
