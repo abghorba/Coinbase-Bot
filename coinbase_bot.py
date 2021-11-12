@@ -93,7 +93,7 @@ class CoinbaseProHandler():
         )
 
         if response:
-            print(f"Successfully deposited ${amount} to Coinbase Pro account.")
+            print(f"Successfully deposited ${amount:.2f} to Coinbase Pro account.")
             success = True
         else:
             print("Could not make deposit to Coinbase Pro account.")
@@ -179,7 +179,6 @@ class CoinbaseProHandler():
         )
 
         # Parse the JSON response
-        print(response.json())
         transaction = response.json()[0]
 
         coinbase_fee = round(float(transaction["fee"]), 2)
