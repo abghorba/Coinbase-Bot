@@ -362,7 +362,7 @@ class CoinbaseBot():
                 # Deposit from bank.
                 deposit_amount = sum(self.orders.values())
                 print(f"Depositing ${deposit_amount:.2f} into Coinbase Pro account. . .")
-                self.coinbase.deposit_from_bank(0) #deposit_amount)
+                self.coinbase.deposit_from_bank(deposit_amount)
 
                 # Update to the next deposit date.
                 self.update_deposit_date()
