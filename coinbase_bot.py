@@ -1,4 +1,4 @@
-import json, hmac, hashlib, smtplib, time, requests, base64
+import datetime, json, hmac, hashlib, smtplib, time, requests, base64
 from config import EMAIL_ADDRESS, EMAIL_PASSWORD
 from email.message import EmailMessage
 from requests.auth import AuthBase
@@ -36,8 +36,7 @@ class CoinbaseProHandler():
 
 
     def get_payment_method(self):
-        """
-        Retrieves the user's bank from Coinbase Pro
+        """Retrieves the user's bank from Coinbase Pro
         profile.
 
         Parameters
@@ -64,8 +63,7 @@ class CoinbaseProHandler():
 
 
     def deposit_from_bank(self, amount):
-        """
-        Deposits USD from user's bank account
+        """Deposits USD from user's bank account
         into their USD Wallet on Coinbase Pro.
 
         Parameters
@@ -103,8 +101,7 @@ class CoinbaseProHandler():
 
 
     def place_market_order(self, product, amount):
-        """
-        Places a market order for specified
+        """Places a market order for specified
         product with a specified amount of USD.
 
         Parameters
@@ -152,8 +149,7 @@ class CoinbaseProHandler():
 
 
     def get_transaction_details(self, product, start_date):
-        """
-        Retrieves the JSON response of the transaction details.
+        """Retrieves the JSON response of the transaction details.
 
         Parameters
         ----------
@@ -200,8 +196,7 @@ class CoinbaseProHandler():
 
     
     def send_email_confirmation(self, transaction_details):
-        """
-        Send's user a confirmation email with
+        """Send's user a confirmation email with
         the details of the transaction.  
 
         Parameters
@@ -248,3 +243,150 @@ class CoinbaseProHandler():
             success = True
         
         return success
+
+ 
+FREQUENCY_TO_DAYS = {
+    "daily": 1,
+    "weekly": 7,
+    "biweekly": 14,
+    "monthly": 30
+}
+
+class CoinbaseBot():
+    def __init__(self, api_url, auth, frequency, start_date, start_time):
+        self.coinbase = CoinbaseProHandler(api_url, auth)
+        self.time_delta = FREQUENCY_TO_DAYS[frequency]
+        self.next_purchase_date = self.parse_to_datetime(start_date, start_time)
+        self.next_deposit_date = self.next_purchase_date + datetime.timedelta(minutes=-1)
+        self.orders = {}
+
+
+    def parse_to_datetime(self, date, time):
+        """Parses both a date string and a time string into one datetime
+        object.
+
+        Parameters
+        ----------
+        date : str
+            The date string in format YYYY-MM-DD.
+        time : str
+            The time string in format HH:MM XM.
+
+        Returns
+        -------
+        date_and_time : datetime
+            A datetime object representing the passed in date and time
+            strings.
+        """
+        date_and_time = date + " " + time
+        format = "%Y-%m-%d %I:%M %p"
+        date_and_time = datetime.datetime.strptime(date_and_time, format)
+        return date_and_time
+
+
+    def update_frequency(self, new_frequency):
+        """Updates the frequency of the purchases.
+
+        Parameters
+        ----------
+        new_frequency : str
+            Valid values are "daily", "weekly", "biweekly", "monthly".
+
+        Returns
+        -------
+        None
+        """
+        if new_frequency not in FREQUENCY_TO_DAYS:
+            print("ERROR: Invalid value for new_frequency.")
+        self.time_delta = FREQUENCY_TO_DAYS[new_frequency]
+
+
+    def update_deposit_date(self):
+        """Updates to the next deposit date."""
+        self.next_deposit_date += datetime.timedelta(self.time_delta)
+
+
+    def update_purchase_date(self):
+        """Updates to the next purchase date."""
+        self.next_purchase_date += datetime.timedelta(self.time_delta)
+
+
+    def is_time_to_deposit(self):
+        """Returns True if the current datetime is the deposit datetime."""
+        now = datetime.datetime.now().replace(second=0, microsecond=0)
+        return now == self.next_deposit_date
+
+
+    def is_time_to_purchase(self):
+        """Returns True if current datetime is the purchase datetime."""
+        now = datetime.datetime.now().replace(second=0, microsecond=0)
+        return now == self.next_purchase_date
+
+
+    def set_orders(self, **kwargs):
+        """Sets the orders for recurring purchases.
+
+        Parameters
+        ----------
+        dict
+            Any number of key-value pairs for product to amount.
+            Ex. {"BTC": 20, "ETH": 20, "ADA": 20}
+        
+        Returns
+        -------
+        None
+        """
+        self.orders = {}
+        for product, amount in kwargs.items():
+            self.orders[product] = amount
+
+
+    def activate(self):
+        """Activates the coinbase bot and performs transactions
+        based on the dates and conditions.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
+        print(f"Next deposit date: {self.next_deposit_date}")
+        print(f"Next purchasing date: {self.next_purchase_date}")
+
+        while True:
+            # If our conditions are met, initiate transactions.
+            if self.is_time_to_deposit():
+                # Deposit from bank.
+                deposit_amount = sum(self.orders.values())
+                print(f"Depositing ${deposit_amount:.2f} into Coinbase Pro account. . .")
+                self.coinbase.deposit_from_bank(0) #deposit_amount)
+
+                # Update to the next deposit date.
+                self.update_deposit_date()
+
+            if self.is_time_to_purchase():
+                # Place market orders.
+                for product, amount in self.orders.items():
+                    print(f"Placing order for ${amount:.2f} of {product}. . .")
+                    self.coinbase.place_market_order(product, amount)
+
+                    # Pause to give time for the Coinbase API to update
+                    # and store the transaction information.
+                    time.sleep(3)
+                    try:
+                        purchase_date = self.next_purchase_date.strftime("%I:%M%p")
+                        transaction_details = self.coinbase.get_transaction_details(product, purchase_date)
+                        self.coinbase.send_email_confirmation(transaction_details)
+                        print("Email confirmation sent!")
+                    except KeyError: # If there are no transaction details.
+                        print("ERROR: Email could not be sent.")
+
+                # Update to the next purchase date.
+                self.update_purchase_date()
+
+                # Print out the next deposit/purchase dates.
+                print(f"Next deposit date: {self.next_deposit_date}")
+                print(f"Next purchasing date: {self.next_purchase_date}")

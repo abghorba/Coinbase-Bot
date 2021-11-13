@@ -26,24 +26,34 @@ Store this information in a config.py file like so:
         CB_API_PASS = ''
 
 Now, you are able to configure your main() function in place_order.py
-to your own specifications. At the moment, the main() function is set to
-weekly purchases on Fridays at 10:00AM. Change these variables to your own
-specifications:
+to your own specifications. 
+You can change the frequency to "daily", "weekly", "biweekly", or "monthly".
+You can change start_date to whatever, as long as the format is YYYY-MM-DD.
+You can change start_time to whatever, as long as the format is HH:MM XM.
 
-            deposit_amount = <number in USD format>
-            day_of_purchase = <day of the week>
-            time_of_deposit = <time in format hh:mm with AM or PM appended>
-            time_of_purchase = <time in format hh:mm with AM or PM appended>
-            orders = {
-                    <cyrpto> : <purchase amount in USD format>,
-                    <crypto> : <purchase amount in USD format>,
-                    . . . .
-            }
+        coinbase = CoinbaseBot(
+                api_url="https://api.pro.coinbase.com/",
+                auth=CoinbaseExchangeAuth(CB_API_KEY, CB_API_SECRET, CB_API_PASS),
+                frequency="biweekly",
+                start_date="2021-11-19",
+                start_time="10:00 AM"
+                )
 
-Make sure time_of_deposit occurs before time_of_purchase otherwise the market
-orders will not go through.
 
-If an order is successful, you can receive emails to notify you. To do this,
+Now, you will need to set your orders. You can do this by manipulating the following
+in main() on place_order.py. The key will be the cryptocurrency to buy, and the value
+will be the amount to purchase.
+
+        coinbase.set_orders(**{
+                "BTC": 20,
+                "ETH": 30,
+        })
+
+
+The bot will sum the values in the orders and will deposit that amount into your Coinbase
+Pro account. The market orders will be placed shortly after.
+
+If an order is successful, you will receive an email to notify you. To configure this,
 in your config.py file, add in the following:
 
                 EMAIL_ADDRESS = ''
