@@ -375,13 +375,13 @@ class CoinbaseBot():
 
                     # Pause to give time for the Coinbase API to update
                     # and store the transaction information.
-                    time.sleep(3)
+                    time.sleep(10)
                     try:
-                        purchase_date = self.next_purchase_date.strftime("%I:%M%p")
+                        purchase_date = self.next_purchase_date.strftime("%Y-%m-%d")
                         transaction_details = self.coinbase.get_transaction_details(product, purchase_date)
                         self.coinbase.send_email_confirmation(transaction_details)
                         print("Email confirmation sent!")
-                    except KeyError: # If there are no transaction details.
+                    except IndexError: # If there are no transaction details.
                         print("ERROR: Email could not be sent.")
 
                 # Update to the next purchase date.

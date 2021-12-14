@@ -5,8 +5,8 @@ def main():
     coinbase = CoinbaseBot(
             api_url="https://api.pro.coinbase.com/",
             auth=CoinbaseExchangeAuth(CB_API_KEY, CB_API_SECRET, CB_API_PASS),
-            frequency="biweekly",
-            start_date="2021-11-19",
+            frequency="weekly",
+            start_date="2021-12-17",
             start_time="10:00 AM"
         )
 
