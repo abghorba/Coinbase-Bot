@@ -1,19 +1,20 @@
-from coinbase_bot import CoinbaseExchangeAuth, CoinbaseBot
+from coinbase_bot import CoinbaseExchangeAuth, CoinbaseBot, InputCollector
 from config import CB_API_KEY, CB_API_SECRET, CB_API_PASS
 
 def main():
+    # Grab inputs from the user and check they are valid inputs.
+    user_inputs = InputCollector()
+    user_inputs.collect_inputs()
+
     coinbase = CoinbaseBot(
             api_url="https://api.pro.coinbase.com/",
             auth=CoinbaseExchangeAuth(CB_API_KEY, CB_API_SECRET, CB_API_PASS),
-            frequency="weekly",
-            start_date="2021-12-17",
-            start_time="10:00 AM"
+            frequency=user_inputs.frequency,
+            start_date=user_inputs.start_date,
+            start_time=user_inputs.start_time
         )
 
-    coinbase.set_orders(**{
-        "BTC": 20,
-        "ETH": 30,
-    })
+    coinbase.set_orders(**user_inputs.orders)
 
     coinbase.activate()
 
