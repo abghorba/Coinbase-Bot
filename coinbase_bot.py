@@ -1,18 +1,13 @@
-from ctypes import create_unicode_buffer
 import datetime, json, hmac, hashlib, smtplib, time, requests, base64
 from config import EMAIL_ADDRESS, EMAIL_PASSWORD
 from email.message import EmailMessage
 from requests.auth import AuthBase
 
 
-FREQUENCY_TO_DAYS = {
-    "daily": 1,
-    "weekly": 7,
-    "biweekly": 14,
-    "monthly": 30
-}
+FREQUENCY_TO_DAYS = {"daily": 1, "weekly": 7, "biweekly": 14, "monthly": 30}
 
-class InputCollector():
+
+class InputCollector:
     def __init__(self):
         self.start_date_is_today = False
 
@@ -27,7 +22,7 @@ class InputCollector():
         -------
         date : str
             The date string in format YYYY-MM-DD.
-        
+
         """
         valid_date = False
 
@@ -48,9 +43,11 @@ class InputCollector():
             except ValueError:
                 print("This date does not exist!")
                 continue
-            
+
             # Make sure the date isn't before the current day
-            current_date = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+            current_date = datetime.datetime.now().replace(
+                hour=0, minute=0, second=0, microsecond=0
+            )
             if converted_date < current_date:
                 print("The date must occur on or after the current date.")
                 continue
@@ -60,9 +57,8 @@ class InputCollector():
                 self.start_date_is_today = True
 
             valid_date = True
-        
-        return date
 
+        return date
 
     def get_start_time(self):
         """Checks if the start date the user inputs is valid.
@@ -76,12 +72,14 @@ class InputCollector():
         -------
         start_time : str
             The time in format HH:MM XM.
-        
+
         """
         valid_start_time = False
-        
+
         while not valid_start_time:
-            start_time = input("Enter in the time you wish to conduct transactions in format HH:MM XM: ")
+            start_time = input(
+                "Enter in the time you wish to conduct transactions in format HH:MM XM: "
+            )
 
             # Null check
             if not start_time:
@@ -100,14 +98,15 @@ class InputCollector():
             if self.start_date_is_today:
                 current_time = datetime.datetime.now().time()
                 if converted_time < current_time:
-                    print("The chosen start date is today. The time of the transaction must occur after the current time.")
+                    print(
+                        "The chosen start date is today. The time of the transaction must occur after the current time."
+                    )
                     continue
-            
+
             valid_start_time = True
 
         return start_time
 
-            
     def get_frequency(self):
         """Checks if the frequency the user inputs is valid.
 
@@ -119,12 +118,14 @@ class InputCollector():
         -------
         frequency : str
             The frequency of the transactions.
-        
+
         """
         valid_frequency = False
 
         while not valid_frequency:
-            frequency = input("How often would you like to make purchases? Valid values include \"daily\", \"weekly\", \"biweekly\", and \"monthly\": ")
+            frequency = input(
+                'How often would you like to make purchases? Valid values include "daily", "weekly", "biweekly", and "monthly": '
+            )
 
             # Null check
             if not frequency:
@@ -135,14 +136,15 @@ class InputCollector():
             if frequency.lower() in FREQUENCY_TO_DAYS:
                 valid_frequency = True
             else:
-                print("Invalid value. Valid values include \"daily\", \"weekly\", \"biweekly\", and \"monthly\".")
+                print(
+                    'Invalid value. Valid values include "daily", "weekly", "biweekly", and "monthly".'
+                )
 
         return frequency
 
-
     def get_orders(self):
         """Constructs a dictionary of each order.
-        
+
         Parameters
         ----------
         None
@@ -162,12 +164,16 @@ class InputCollector():
             # Grab the crypto symbol first
             valid_crypto = False
             while not valid_crypto:
-                crypto = input("Enter in the cryprocurrency symbol you wish to purchase: ")
+                crypto = input(
+                    "Enter in the cryprocurrency symbol you wish to purchase: "
+                )
                 crypto = crypto.upper()
 
                 # There is already a pending order for the inputted cryptocurrency
                 if crypto in orders:
-                    overwrite_order = input("There is already a pending order for this cryptocurrency. Continuing will overwrite the previous order. Continue? Y/N ")
+                    overwrite_order = input(
+                        "There is already a pending order for this cryptocurrency. Continuing will overwrite the previous order. Continue? Y/N "
+                    )
                     if overwrite_order == "N":
                         continue
 
@@ -181,7 +187,7 @@ class InputCollector():
                 if r.status_code != 200:
                     print("Invalid crypto symbol.")
                     continue
-                
+
                 valid_crypto = True
 
             # Next grab the dollar amount
@@ -202,13 +208,12 @@ class InputCollector():
                     continue
 
                 valid_dollar_amount = True
-            
+
             wish_to_continue = input("Do you wish to add more orders? Y/N ")
             if wish_to_continue == "N":
                 valid_orders = True
-        
-        return orders
 
+        return orders
 
     def collect_inputs(self):
         """Driver function to collect all inputs from user."""
@@ -227,27 +232,28 @@ class CoinbaseExchangeAuth(AuthBase):
 
     def __call__(self, request):
         timestamp = str(time.time())
-        message = timestamp + request.method + request.path_url + (request.body or '')
+        message = timestamp + request.method + request.path_url + (request.body or "")
         hmac_key = base64.b64decode(self.secret_key)
         signature = hmac.new(hmac_key, message.encode(), hashlib.sha256)
         signature_b64 = base64.b64encode(signature.digest()).decode()
 
-        request.headers.update({
-            'CB-ACCESS-SIGN': signature_b64,
-            'CB-ACCESS-TIMESTAMP': timestamp,
-            'CB-ACCESS-KEY': self.api_key,
-            'CB-ACCESS-PASSPHRASE': self.passphrase,
-            'Content-Type': 'application/json'
-        })
+        request.headers.update(
+            {
+                "CB-ACCESS-SIGN": signature_b64,
+                "CB-ACCESS-TIMESTAMP": timestamp,
+                "CB-ACCESS-KEY": self.api_key,
+                "CB-ACCESS-PASSPHRASE": self.passphrase,
+                "Content-Type": "application/json",
+            }
+        )
         return request
 
 
 # Create custom handler for placing orders.
-class CoinbaseProHandler():
+class CoinbaseProHandler:
     def __init__(self, api_url, auth):
         self.api_url = api_url
         self.auth = auth
-
 
     def get_payment_method(self):
         """Retrieves the user's bank from Coinbase Pro
@@ -262,19 +268,15 @@ class CoinbaseProHandler():
         payment_id : str or None
             The user's bank ID.
         """
-        response = requests.get(
-            self.api_url + 'payment-methods', 
-            auth=self.auth
-        )
+        response = requests.get(self.api_url + "payment-methods", auth=self.auth)
 
         if response:
             print("Successfully retrieved payment method.")
-            payment_id = response.json()[0]['id']
+            payment_id = response.json()[0]["id"]
             return payment_id
         else:
             print("Could not find payment method.")
             print(response.content)
-
 
     def deposit_from_bank(self, amount):
         """Deposits USD from user's bank account
@@ -288,20 +290,20 @@ class CoinbaseProHandler():
         Returns
         -------
         success : bool
-            True if the deposit is successful. 
+            True if the deposit is successful.
         """
         success = False
 
         deposit_request = {
-            'amount': amount,
-            'currency': 'USD',
-            'payment_method_id': self.get_payment_method()
+            "amount": amount,
+            "currency": "USD",
+            "payment_method_id": self.get_payment_method(),
         }
 
         response = requests.post(
-            self.api_url + 'deposits/payment-method',
+            self.api_url + "deposits/payment-method",
             data=json.dumps(deposit_request),
-            auth=self.auth
+            auth=self.auth,
         )
 
         if response:
@@ -312,7 +314,6 @@ class CoinbaseProHandler():
             print(response.content)
 
         return success
-
 
     def place_market_order(self, product, amount):
         """Places a market order for specified
@@ -343,13 +344,11 @@ class CoinbaseProHandler():
             "type": "market",
             "side": "buy",
             "product_id": product + "-USD",
-            "funds": amount
+            "funds": amount,
         }
 
         response = requests.post(
-            self.api_url + 'orders',
-            data=json.dumps(market_order),
-            auth=self.auth
+            self.api_url + "orders", data=json.dumps(market_order), auth=self.auth
         )
 
         if response:
@@ -358,9 +357,8 @@ class CoinbaseProHandler():
         else:
             print("Could not place market order.")
             print(response.content)
-        
-        return success
 
+        return success
 
     def get_transaction_details(self, product, start_date):
         """Retrieves the JSON response of the transaction details.
@@ -377,15 +375,10 @@ class CoinbaseProHandler():
         parsed_transaction : dict
             Extracted details from the retrieved JSON.
         """
-        fill_parameters = {
-            "product_id": product + "-USD",
-            "start_date": start_date
-        }
+        fill_parameters = {"product_id": product + "-USD", "start_date": start_date}
 
         response = requests.get(
-            self.api_url + "fills",
-            params=fill_parameters,
-            auth=self.auth
+            self.api_url + "fills", params=fill_parameters, auth=self.auth
         )
 
         # Parse the JSON response
@@ -395,7 +388,7 @@ class CoinbaseProHandler():
         amount_invested = round(float(transaction["usd_volume"]), 2)
         purchase_price = round(float(transaction["price"]), 2)
         purchase_amount = transaction["size"]
-        
+
         parsed_transaction = {
             "product": product,
             "start_date": start_date,
@@ -403,15 +396,14 @@ class CoinbaseProHandler():
             "amount_invested": "%.2f" % amount_invested,
             "purchase_price": "%.2f" % purchase_price,
             "purchase_amount": purchase_amount,
-            "total_amount": "%.2f" % (coinbase_fee + amount_invested)
+            "total_amount": "%.2f" % (coinbase_fee + amount_invested),
         }
 
         return parsed_transaction
 
-    
     def send_email_confirmation(self, transaction_details):
         """Send's user a confirmation email with
-        the details of the transaction.  
+        the details of the transaction.
 
         Parameters
         ----------
@@ -421,7 +413,7 @@ class CoinbaseProHandler():
         Returns
         -------
         success : bool
-            True if the email is sent successfully.     
+            True if the email is sent successfully.
         """
         success = False
 
@@ -437,36 +429,39 @@ class CoinbaseProHandler():
         total_amount = transaction_details["total_amount"]
 
         msg = EmailMessage()
-        msg['Subject'] = f"Your Purchase of ${total_amount} of {product} Was Successful!"
-        msg['From'] = EMAIL_ADDRESS
-        msg['To'] = EMAIL_ADDRESS
+        msg[
+            "Subject"
+        ] = f"Your Purchase of ${total_amount} of {product} Was Successful!"
+        msg["From"] = EMAIL_ADDRESS
+        msg["To"] = EMAIL_ADDRESS
 
-        content = f'Hello,\n\n You successfully placed your order! Please see below details:\n\n \
+        content = f"Hello,\n\n You successfully placed your order! Please see below details:\n\n \
             Amount Purchased: {purchase_amount} {product}\n \
             Purchase Price: ${purchase_price}\n \
             Total Amount: ${total_amount}\n \
             Amount Invested: ${amount_invested}\n \
             Coinbase Fees: ${coinbase_fee}\n \
-            Date: {start_date}'
+            Date: {start_date}"
 
         msg.set_content(content)
 
-        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
             smtp.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
             smtp.send_message(msg)
             success = True
-        
+
         return success
 
 
-class CoinbaseBot():
+class CoinbaseBot:
     def __init__(self, api_url, auth, frequency, start_date, start_time):
         self.coinbase = CoinbaseProHandler(api_url, auth)
         self.time_delta = FREQUENCY_TO_DAYS[frequency]
         self.next_purchase_date = self.parse_to_datetime(start_date, start_time)
-        self.next_deposit_date = self.next_purchase_date + datetime.timedelta(minutes=-1)
+        self.next_deposit_date = self.next_purchase_date + datetime.timedelta(
+            minutes=-1
+        )
         self.orders = {}
-
 
     def parse_to_datetime(self, date, time):
         """Parses both a date string and a time string into one datetime
@@ -490,7 +485,6 @@ class CoinbaseBot():
         date_and_time = datetime.datetime.strptime(date_and_time, format)
         return date_and_time
 
-
     def update_frequency(self, new_frequency):
         """Updates the frequency of the purchases.
 
@@ -507,28 +501,23 @@ class CoinbaseBot():
             print("ERROR: Invalid value for new_frequency.")
         self.time_delta = FREQUENCY_TO_DAYS[new_frequency]
 
-
     def update_deposit_date(self):
         """Updates to the next deposit date."""
         self.next_deposit_date += datetime.timedelta(self.time_delta)
 
-
     def update_purchase_date(self):
         """Updates to the next purchase date."""
         self.next_purchase_date += datetime.timedelta(self.time_delta)
-
 
     def is_time_to_deposit(self):
         """Returns True if the current datetime is the deposit datetime."""
         now = datetime.datetime.now().replace(second=0, microsecond=0)
         return now == self.next_deposit_date
 
-
     def is_time_to_purchase(self):
         """Returns True if current datetime is the purchase datetime."""
         now = datetime.datetime.now().replace(second=0, microsecond=0)
         return now == self.next_purchase_date
-
 
     def set_orders(self, **kwargs):
         """Sets the orders for recurring purchases.
@@ -538,7 +527,7 @@ class CoinbaseBot():
         dict
             Any number of key-value pairs for product to amount.
             Ex. {"BTC": 20, "ETH": 20, "ADA": 20}
-        
+
         Returns
         -------
         None
@@ -546,7 +535,6 @@ class CoinbaseBot():
         self.orders = {}
         for product, amount in kwargs.items():
             self.orders[product] = amount
-
 
     def activate(self):
         """Activates the coinbase bot and performs transactions
@@ -568,7 +556,9 @@ class CoinbaseBot():
             if self.is_time_to_deposit():
                 # Deposit from bank.
                 deposit_amount = sum(self.orders.values())
-                print(f"Depositing ${deposit_amount:.2f} into Coinbase Pro account. . .")
+                print(
+                    f"Depositing ${deposit_amount:.2f} into Coinbase Pro account. . ."
+                )
                 self.coinbase.deposit_from_bank(deposit_amount)
 
                 # Update to the next deposit date.
@@ -585,10 +575,12 @@ class CoinbaseBot():
                     time.sleep(10)
                     try:
                         purchase_date = self.next_purchase_date.strftime("%Y-%m-%d")
-                        transaction_details = self.coinbase.get_transaction_details(product, purchase_date)
+                        transaction_details = self.coinbase.get_transaction_details(
+                            product, purchase_date
+                        )
                         self.coinbase.send_email_confirmation(transaction_details)
                         print("Email confirmation sent!")
-                    except IndexError: # If there are no transaction details.
+                    except IndexError:  # If there are no transaction details.
                         print("ERROR: Email could not be sent.")
 
                 # Update to the next purchase date.
