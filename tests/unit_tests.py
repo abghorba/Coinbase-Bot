@@ -6,7 +6,7 @@ from coinbase.coinbase_bot import CoinbaseBot, CoinbaseProHandler, CoinbaseExcha
 
 SANDBOX_API_URL = "https://api-public.sandbox.pro.coinbase.com/"
 
-class TestCoinbaseProHandler:
+class TestCoinbaseProHandler():
 
     coinbase_auth = CoinbaseExchangeAuth(CB_API_KEY_TEST, 
                                          CB_API_SECRET_TEST,
