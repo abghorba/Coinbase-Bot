@@ -1,18 +1,19 @@
+import pytest
+
 from config import CB_API_KEY_TEST, CB_API_SECRET_TEST, CB_API_PASS_TEST
 from coinbase.coinbase_bot import CoinbaseBot, CoinbaseProHandler, CoinbaseExchangeAuth
-import pytest
 
 
 SANDBOX_API_URL = "https://api-public.sandbox.pro.coinbase.com/"
 
-
 class TestCoinbaseProHandler:
-    coinbase_pro = CoinbaseProHandler(
-        api_url=SANDBOX_API_URL,
-        auth=CoinbaseExchangeAuth(
-            CB_API_KEY_TEST, CB_API_SECRET_TEST, CB_API_PASS_TEST
-        ),
-    )
+
+    coinbase_auth = CoinbaseExchangeAuth(CB_API_KEY_TEST, 
+                                         CB_API_SECRET_TEST,
+                                         CB_API_PASS_TEST)
+
+    coinbase_pro = CoinbaseProHandler(api_url=SANDBOX_API_URL, 
+                                      auth=coinbase_auth)
 
     @pytest.mark.parametrize(
         "product,amount,expected",

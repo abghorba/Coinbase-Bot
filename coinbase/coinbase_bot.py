@@ -7,8 +7,8 @@ import requests
 import smtplib
 import time
 
-from coinbase.frequency import FREQUENCY_TO_DAYS
 from config import EMAIL_ADDRESS, EMAIL_PASSWORD
+from coinbase.frequency import FREQUENCY_TO_DAYS
 from email.message import EmailMessage
 from requests.auth import AuthBase
 
