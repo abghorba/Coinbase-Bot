@@ -20,27 +20,29 @@ also be given the following 3 pieces of information:
         secret
         passphrase
 
-Create a .env file from the provided .env.example file. Store this information
-in the .env file in these variables:
+Navigate to initialize.sh and populate the following variables:
 
-        CB_API_KEY = ''
-        CB_API_SECRET = ''
-        CB_API_PASS = ''
+        CB_API_KEY=""
+        CB_API_SECRET=""
+        CB_API_PASS=""
 
 In order to run tests, you must also fill out the credentials for the Coinbase Sandbox
-API in the .env file as such:
+API:
                 
-        CB_API_KEY_TEST = ''
-        CB_API_SECRET_TEST = ''
-        CB_API_PASS_TEST = ''
+        CB_API_KEY_TEST=""
+        CB_API_SECRET_TEST=""
+        CB_API_PASS_TEST=""
 
-To receive email confirmations of successful orders, fill out the following in your
-.env file
+To receive email confirmations of successful orders, fill out the following as well:
 
-        EMAIL_ADDRESS = ''
-        EMAIL_PASSWORD = ''
+        EMAIL_ADDRESS=""
+        EMAIL_PASSWORD=""
 
-You may need to adjust security settings on your email account for this.
+You may need to adjust security settings on your email account for this to work properly.
+
+After this is done, you can create a virtual environment, install dependencies, and create your .env file by running:
+
+        sh initialize.sh
 
 
 <h2> Usage </h2>
@@ -65,3 +67,7 @@ Pro account. The market orders will be placed shortly after.
 
 If you set up your email credentials correctly, you will be sent a confirmation once the
 market order has been placed and filled.
+
+
+<h2> Disclaimer </h2>
+Any stock or ticker mentioned is not to be taken as financial advice. You are using this bot at your own discretion and with the knowledge that you can lose (part of) your investment.
