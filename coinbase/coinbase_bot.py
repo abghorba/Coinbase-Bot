@@ -1,5 +1,4 @@
 import base64
-import datetime
 import hashlib
 import hmac
 import json
@@ -10,6 +9,8 @@ import time
 from config import EMAIL_ADDRESS
 from config import EMAIL_PASSWORD
 from coinbase.frequency import FREQUENCY_TO_DAYS
+from datetime import datetime
+from datetime import timedelta
 from email.message import EmailMessage
 from requests.auth import AuthBase
 
@@ -151,6 +152,9 @@ class CoinbaseProHandler():
             print(f"Successfully made a market order for ${amount} of {product}.")
             success = True
 
+            # Sleep for 15 seconds to ensure Coinbase API updates
+            time.sleep(15)
+
         else:
             print("Could not place market order.")
             print(response.content)
@@ -254,7 +258,7 @@ class CoinbaseBot():
         self.coinbase = CoinbaseProHandler(api_url, auth)
         self.time_delta = FREQUENCY_TO_DAYS[frequency]
         self.next_purchase_date = self.parse_to_datetime(start_date, start_time)
-        self.next_deposit_date = self.next_purchase_date + datetime.timedelta(minutes=-1)
+        self.next_deposit_date = self.next_purchase_date + timedelta(minutes=-1)
         self.orders = orders
 
     def parse_to_datetime(self, date, time):
@@ -271,7 +275,7 @@ class CoinbaseBot():
 
         date_and_time = date + " " + time
         format = "%Y-%m-%d %I:%M %p"
-        date_and_time = datetime.datetime.strptime(date_and_time, format)
+        date_and_time = datetime.strptime(date_and_time, format)
         return date_and_time
 
     def update_frequency(self, new_frequency):
@@ -300,14 +304,14 @@ class CoinbaseBot():
     def is_time_to_deposit(self):
         """Returns True if the current datetime is the deposit datetime."""
 
-        now = datetime.datetime.now().replace(second=0, microsecond=0)
+        now = datetime.today().replace(second=0, microsecond=0)
 
         return now == self.next_deposit_date
 
     def is_time_to_purchase(self):
         """Returns True if current datetime is the purchase datetime."""
 
-        now = datetime.datetime.now().replace(second=0, microsecond=0)
+        now = datetime.today().replace(second=0, microsecond=0)
 
         return now == self.next_purchase_date
 
@@ -358,10 +362,6 @@ class CoinbaseBot():
                 for product, amount in self.orders.items():
                     print(f"Placing order for ${amount:.2f} of {product}. . .")
                     self.coinbase.place_market_order(product, amount)
-
-                    # Pause to give time for the Coinbase API to update
-                    # and store the transaction information.
-                    time.sleep(15)
 
                     try:
                         purchase_date = self.next_purchase_date.strftime("%Y-%m-%d")

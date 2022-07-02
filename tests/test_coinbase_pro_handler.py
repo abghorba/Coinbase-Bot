@@ -7,6 +7,7 @@ from config import CB_API_PASS_TEST
 from config import CB_API_SECRET_TEST
 from config import EMAIL_ADDRESS
 from config import EMAIL_PASSWORD
+from datetime import datetime
 
 
 SANDBOX_API_URL = "https://api-public.sandbox.pro.coinbase.com/"
@@ -29,6 +30,8 @@ class TestCoinbaseProHandler():
 
     invalid_coinbase_pro = CoinbaseProHandler(api_url=SANDBOX_API_URL, 
                                               auth=invalid_coinbase_auth)
+
+    todays_date = datetime.today().strftime('%Y-%m-%d')
 
 
     def test_get_payment_method_invalid_auth(self):
@@ -110,13 +113,14 @@ class TestCoinbaseProHandler():
         assert result == expected
 
     def test_get_transaction_details_invalid_auth(self):
-        details = self.invalid_coinbase_pro.get_transaction_details("BTC", "2022-01-01")
-        assert not details 
+        details = self.invalid_coinbase_pro.get_transaction_details("BTC", self.todays_date)
+        assert not bool(details)
 
     @pytest.mark.skipif(not NONEMPTY_API_CREDENTIALS, reason="No API credentials provided")
     def test_get_transaction_details_valid_auth(self):
-        details = self.invalid_coinbase_pro.get_transaction_details("BTC", "2022-01-01")
-        assert details
+        details = self.invalid_coinbase_pro.get_transaction_details("BTC", self.todays_date)
+        print(details)
+        assert bool(details)
 
     @pytest.mark.skipif(NONEMPTY_EMAIL_CREDENTIALS, reason="Email credentials are provided")
     def test_send_email_confirmation_invalid_email_credentials(self):
@@ -143,5 +147,5 @@ class TestCoinbaseProHandler():
             "purchase_amount": "0.1",
             "total_amount": "9.90"
         }
-        success = self.invalid_coinbase_pro.send_email_confirmation(transaction_details)
+        success = self.valid_coinbase_pro.send_email_confirmation(transaction_details)
         assert success
