@@ -7,16 +7,21 @@ import requests
 import smtplib
 import time
 
-from config import EMAIL_ADDRESS, EMAIL_PASSWORD
+from config import EMAIL_ADDRESS
+from config import EMAIL_PASSWORD
 from coinbase.frequency import FREQUENCY_TO_DAYS
 from email.message import EmailMessage
 from requests.auth import AuthBase
+
+
+COINBASE_API_URL = "https://api.pro.coinbase.com/"
 
 
 # Create custom authentication for Exchange.
 class CoinbaseExchangeAuth(AuthBase):
 
     def __init__(self, api_key, secret_key, passphrase):
+        
         self.api_key = api_key
         self.secret_key = secret_key
         self.passphrase = passphrase
@@ -42,7 +47,8 @@ class CoinbaseExchangeAuth(AuthBase):
 
 
 # Create custom handler for placing orders
-class CoinbaseProHandler:
+class CoinbaseProHandler():
+
     def __init__(self, api_url, auth):
         self.api_url = api_url
         self.auth = auth
@@ -54,6 +60,8 @@ class CoinbaseProHandler:
 
         :return: The user's bank ID as a string
         """
+        
+        payment_id = ""
 
         response = requests.get(self.api_url + "payment-methods", auth=self.auth)
 
@@ -61,11 +69,11 @@ class CoinbaseProHandler:
             print("Successfully retrieved payment method.")
             payment_id = response.json()[0]["id"]
 
-            return payment_id
-
         else:
             print("Could not find payment method.")
             print(response.content)
+
+        return payment_id
 
     def deposit_from_bank(self, amount):
         """
@@ -77,6 +85,14 @@ class CoinbaseProHandler:
         """
 
         success = False
+
+        if not isinstance(amount, float):
+            print("amount must be a number")
+            return success
+
+        if amount <= 0:
+            print("amount must be a positive number")
+            return success
 
         deposit_request = {
             "amount": amount,
@@ -105,8 +121,6 @@ class CoinbaseProHandler:
         Places a market order for specified
         product with a specified amount of USD.
 
-        Parameters
-        ----------
         :param product: The cryptocurrency to purchase as a string
         :param amount: The amount of USD to make a purchase with
         :return: True if the market order is successfully executed; False otherwise
@@ -158,6 +172,10 @@ class CoinbaseProHandler:
             self.api_url + "fills", params=fill_parameters, auth=self.auth
         )
 
+        if response.status_code != 200:
+            print("Could not find transaction details")
+            return {}
+
         # Parse the JSON response
         transaction = response.json()[0]
 
@@ -190,6 +208,7 @@ class CoinbaseProHandler:
         success = False
 
         if not transaction_details:
+            print("Transaction details cannot be null")
             return success
 
         product = transaction_details["product"]
@@ -215,22 +234,28 @@ class CoinbaseProHandler:
 
         msg.set_content(content)
 
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
-            smtp.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
-            smtp.send_message(msg)
-            success = True
+        try:
+
+            with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+                smtp.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+                smtp.send_message(msg)
+                success = True
+
+        except smtplib.SMTPAuthenticationError:
+            print("Email credentials are not valid!")
+            pass
 
         return success
 
 
 class CoinbaseBot():
 
-    def __init__(self, api_url, auth, frequency, start_date, start_time):
+    def __init__(self, api_url, auth, frequency, start_date, start_time, orders={}):
         self.coinbase = CoinbaseProHandler(api_url, auth)
         self.time_delta = FREQUENCY_TO_DAYS[frequency]
         self.next_purchase_date = self.parse_to_datetime(start_date, start_time)
         self.next_deposit_date = self.next_purchase_date + datetime.timedelta(minutes=-1)
-        self.orders = {}
+        self.orders = orders
 
     def parse_to_datetime(self, date, time):
         """
@@ -241,6 +266,8 @@ class CoinbaseBot():
         :param time: The time string in format HH:MM XM
         :return: datetime object representing the passed in date and time strings
         """
+        if not date or not time:
+            raise ValueError("date and time parameters cannot be null")
 
         date_and_time = date + " " + time
         format = "%Y-%m-%d %I:%M %p"
@@ -256,19 +283,19 @@ class CoinbaseBot():
         """
 
         if new_frequency not in FREQUENCY_TO_DAYS:
-            print("ERROR: Invalid value for new_frequency.")
+            raise ValueError("ERROR: Invalid value for new_frequency.")
 
         self.time_delta = FREQUENCY_TO_DAYS[new_frequency]
 
     def update_deposit_date(self):
         """Updates to the next deposit date."""
 
-        self.next_deposit_date += datetime.timedelta(self.time_delta)
+        self.next_deposit_date += self.time_delta
 
     def update_purchase_date(self):
         """Updates to the next purchase date."""
 
-        self.next_purchase_date += datetime.timedelta(self.time_delta)
+        self.next_purchase_date += self.time_delta
 
     def is_time_to_deposit(self):
         """Returns True if the current datetime is the deposit datetime."""
@@ -281,6 +308,7 @@ class CoinbaseBot():
         """Returns True if current datetime is the purchase datetime."""
 
         now = datetime.datetime.now().replace(second=0, microsecond=0)
+
         return now == self.next_purchase_date
 
     def set_orders(self, **kwargs):
@@ -291,6 +319,9 @@ class CoinbaseBot():
             Ex. {"BTC": 20, "ETH": 20, "ADA": 20}
         :return: None
         """
+
+        if not kwargs:
+            return ValueError("orders cannot be null")
 
         self.orders = {}
 
@@ -337,8 +368,8 @@ class CoinbaseBot():
                         transaction_details = self.coinbase.get_transaction_details(
                             product, purchase_date
                         )
-                        self.coinbase.send_email_confirmation(transaction_details)
-                        print("Email confirmation sent!")
+                        if self.coinbase.send_email_confirmation(transaction_details):
+                            print("Email confirmation sent!")
 
                     # There are no transaction details
                     except IndexError:

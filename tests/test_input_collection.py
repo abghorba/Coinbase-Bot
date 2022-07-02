@@ -1,25 +1,51 @@
 import pytest
 
 from coinbase.input_collection import InputCollector
+from datetime import date
+from datetime import datetime
+from datetime import timedelta
 
 
 class TestInputCollector():
 
     input_collector = InputCollector()
 
+    todays_datetime = datetime.today()
+
+    todays_date = todays_datetime.strftime('%Y-%m-%d')
+    yesterdays_date = (todays_datetime + timedelta(days=-1)).strftime('%Y-%m-%d')
+    tomorrows_date = (todays_datetime + timedelta(days=1)).strftime('%Y-%m-%d')
+    
+    last_year = todays_datetime.year - 1
+    last_new_year_date = date(last_year, 1, 1).strftime('%Y-%m-%d')
+
+    next_year = todays_datetime.year + 1
+    new_year_date = date(next_year, 1, 1).strftime('%Y-%m-%d')
+
+    current_time = todays_datetime.strftime("%I:%M %p")
+    current_time_minus_thirty_minutes = (todays_datetime + timedelta(minutes=-30)).strftime("%I:%M %p")
+    current_time_minus_one_hour = (todays_datetime + timedelta(hours=-1)).strftime("%I:%M %p")
+    current_time_plus_thirty_minutes = (todays_datetime + timedelta(minutes=30)).strftime("%I:%M %p")
+    current_time_plus_one_hour = (todays_datetime + timedelta(hours=1)).strftime("%I:%M %p")
+
     @pytest.mark.parametrize(
         "date_string,expected",
         [
+            # Invalid Parameters
             ("", False),
             (-1, False),
             ("banana", False),
             (100.00, False),
-            ("2022-02-30", False),
-            ("2021-01-01", False),
             ("01-01-2022", False),
             ("01/01/2022", False),
-            ("2022-06-15", True),
-            ("2023-01-01", True),
+            ("2022-02-30", False),
+
+            # Valid Parameters
+            (last_new_year_date, False),
+            (yesterdays_date, False),
+            (todays_date, True),
+            (tomorrows_date, True),
+            (new_year_date, True),
         ]
     )
     def test_is_valid_start_date(self, date_string, expected):
@@ -31,20 +57,23 @@ class TestInputCollector():
     @pytest.mark.parametrize(
         "time_string,expected",
         [
+            # Invalid Parameters
             ("", False),
             (-1, False),
             ("banana", False),
             ("19:45pm", False),
             ("10:00am", False),
-            ("10:00 am", True),
-            ("10:00 AM", True),
-            ("5:45 PM", True),
-            ("05:45 PM", True),
-            ("06:30 am", True),
+
+            # Valid Parameters
+            (current_time_minus_one_hour, False),
+            (current_time_minus_thirty_minutes, False),
+            (current_time, False),
+            (current_time_plus_thirty_minutes, True),
+            (current_time_plus_one_hour, True),
         ]
     )
     def test_is_valid_start_time_if_start_date_is_today(self, time_string, expected):
-        """Tests if the input is a valid start time if the start date is today."""
+        """Tests if the input is a valid start time if the valid start date is today."""
 
         self.input_collector.start_date_is_today = True
         result = self.input_collector.is_valid_start_time(time_string)
@@ -53,20 +82,23 @@ class TestInputCollector():
     @pytest.mark.parametrize(
         "time_string,expected",
         [
+            # Invalid Parameters
             ("", False),
             (-1, False),
             ("banana", False),
             ("19:45pm", False),
             ("10:00am", False),
-            ("10:00 am", True),
-            ("10:00 AM", True),
-            ("5:45 PM", True),
-            ("05:45 PM", True),
-            ("06:30 am", True),
+
+            # Valid Parameters
+            (current_time_minus_one_hour, True),
+            (current_time_minus_thirty_minutes, True),
+            (current_time, True),
+            (current_time_plus_thirty_minutes, True),
+            (current_time_plus_one_hour, True),
         ]
     )
     def test_is_valid_start_time_if_start_date_is_not_today(self, time_string, expected):
-        """Tests if the input is a valid start time if the start date is not today."""
+        """Tests if the input is a valid start time if the valid start date is after today"""
                 
         self.input_collector.start_date_is_today = False
         result = self.input_collector.is_valid_start_time(time_string)
@@ -75,16 +107,19 @@ class TestInputCollector():
     @pytest.mark.parametrize(
         "frequency,expected",
         [
+            # Invalid Parameters
             ("", False),
             (-1, False),
             ("2021-01-01", False),
             ("10:00 AM", False),
+            ("biannually", False),
+            ("annually", False),
+
+            # Valid Parameters
             ("daily", True),
             ("weekly", True),
             ("biweekly", True),
             ("monthly", True),
-            ("biannually", False),
-            ("annually", False)
         ]
     )
     def test_is_valid_frequency(self, frequency, expected):
@@ -96,16 +131,19 @@ class TestInputCollector():
     @pytest.mark.parametrize(
         "crypto,expected",
         [
-            ("BTC", True),
+            # Invalid Parameters
             (-1, False),
             ("2021-01-01", False),
             ("10:00 AM", False),
             ("daily", False),
+            ("?!?", False),
+            ("123", False),
+
+            # Valid Parameters
+            ("BTC", True),
             ("ETH", True),
             ("ADA", True),
             ("SHIB", True),
-            ("?!?", False),
-            ("123", False)
         ]
     )
     def test_is_valid_crypto(self, crypto, expected):
@@ -117,16 +155,21 @@ class TestInputCollector():
     @pytest.mark.parametrize(
         "amount,expected",
         [
+            # Invalid Parameters
             ("BTC", False),
             (-1, False),
             ("2021-01-01", False),
             ("10:00 AM", False),
-            ("5.00", True),
             ("$10", False),
-            ("10", True),
             (10, False),
             ("?!?", False),
-            ("123abc", False)
+            ("123abc", False),
+            ("$10", False),
+
+            # Valid Parameters
+            ("0", False),
+            ("5.00", True),
+            ("100", True),
         ]
     )
     def test_is_valid_dollar_amount(self, amount, expected):
