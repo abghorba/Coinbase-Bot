@@ -4,7 +4,6 @@ import hmac
 import json
 import requests
 import smtplib
-import time
 
 from config import EMAIL_ADDRESS
 from config import EMAIL_PASSWORD
@@ -13,6 +12,8 @@ from datetime import datetime
 from datetime import timedelta
 from email.message import EmailMessage
 from requests.auth import AuthBase
+from time import sleep
+from time import time
 
 
 COINBASE_API_URL = "https://api.pro.coinbase.com/"
@@ -28,7 +29,7 @@ class CoinbaseExchangeAuth(AuthBase):
         self.passphrase = passphrase
 
     def __call__(self, request):
-        timestamp = str(time.time())
+        timestamp = str(time())
         message = timestamp + request.method + request.path_url + (request.body or "")
         hmac_key = base64.b64decode(self.secret_key)
         signature = hmac.new(hmac_key, message.encode(), hashlib.sha256)
@@ -61,20 +62,15 @@ class CoinbaseProHandler():
 
         :return: The user's bank ID as a string
         """
-        
-        payment_id = ""
 
         response = requests.get(self.api_url + "payment-methods", auth=self.auth)
 
-        if response:
-            print("Successfully retrieved payment method.")
-            payment_id = response.json()[0]["id"]
+        if response.status_code != 200:
+            raise RuntimeError(f"ERROR: Could not find payment method: {response.content}")
 
-        else:
-            print("Could not find payment method.")
-            print(response.content)
+        print("SUCCESS: Retrieved payment method")
 
-        return payment_id
+        return response.json()[0]["id"]
 
     def deposit_from_bank(self, amount):
         """
@@ -82,18 +78,14 @@ class CoinbaseProHandler():
         into their USD Wallet on Coinbase Pro.
 
         :param amount: The amount of USD to deposit
-        :return: True if the deposit is successful; False otherwise
+        :return: True if deposit is successful
         """
 
-        success = False
-
-        if not isinstance(amount, float):
-            print("amount must be a number")
-            return success
+        if not isinstance(amount, (int, float)):
+            raise TypeError("ERROR: amount must be of type int or float")
 
         if amount <= 0:
-            print("amount must be a positive number")
-            return success
+            raise ValueError("ERROR: amount must be a positive number")
 
         deposit_request = {
             "amount": amount,
@@ -107,15 +99,41 @@ class CoinbaseProHandler():
             auth=self.auth,
         )
 
-        if response:
-            print(f"Successfully deposited ${amount:.2f} to Coinbase Pro account.")
-            success = True
+        if response.status_code != 200:
+            raise RuntimeError(f"ERROR: Could not make deposit to Coinbase Pro account: {response.content}")
 
-        else:
-            print("Could not make deposit to Coinbase Pro account.")
-            print(response.content)
+        print(f"SUCCESS: Deposited ${amount:.2f} to Coinbase Pro account.")
+        return True
 
-        return success
+    def are_sufficient_funds_available(self, amount):
+        """
+        Checks if the user has enough USD to place a market order.
+
+        :param amount: The amount of USD to make a purchase with
+        :return: True if user has enough USD for the order; False otherwise
+        """
+
+        if not isinstance(amount, (int, float)):
+            raise TypeError("ERROR: amount must be of type int or float")
+
+        if amount <= 0:
+            raise ValueError("ERROR: amount must be a positive number")
+
+        response = requests.get(self.api_url + "coinbase-accounts", auth=self.auth)
+
+        if response.status_code != 200:
+            raise RuntimeError(f"ERROR: are_sufficient_funds_available() reported a failure")
+
+        coinbase_wallets = response.json()
+
+        available_balance = 0.0
+
+        for wallet in coinbase_wallets:
+            if wallet["name"] == "Cash (USD)" and wallet["currency"] == "USD":
+                available_balance = float(wallet["balance"])
+                break
+        
+        return available_balance >= amount
 
     def place_market_order(self, product, amount):
         """
@@ -124,18 +142,20 @@ class CoinbaseProHandler():
 
         :param product: The cryptocurrency to purchase as a string
         :param amount: The amount of USD to make a purchase with
-        :return: True if the market order is successfully executed; False otherwise
+        :return: True if the market order is successfully executed
         """
 
-        success = False
+        if not isinstance(product, str):
+            raise TypeError("ERROR: product must be of type str")
+
+        if not isinstance(amount, (int, float)):
+            raise TypeError("ERROR: amount must be of type int or float")
 
         if not product:
-            print("Please specify product.")
-            return success
+            raise ValueError("ERROR: product cannot be null")
 
-        elif not amount:
-            print("Please specify amount.")
-            return success
+        if amount <= 0:
+            raise ValueError("ERROR: amount must be a positive number")
 
         market_order = {
             "type": "market",
@@ -148,18 +168,15 @@ class CoinbaseProHandler():
             self.api_url + "orders", data=json.dumps(market_order), auth=self.auth
         )
 
-        if response:
-            print(f"Successfully made a market order for ${amount} of {product}.")
-            success = True
+        if response.status_code != 200:
+            raise RuntimeError(f"Could not place market order: {response.content}")
 
-            # Sleep for 15 seconds to ensure Coinbase API updates
-            time.sleep(15)
+        print(f"SUCCESS: Made a market order for ${amount:.2f} of {product}")
 
-        else:
-            print("Could not place market order.")
-            print(response.content)
+        # Sleep for 15 seconds to ensure Coinbase API updates
+        sleep(15)
 
-        return success
+        return True
 
     def get_transaction_details(self, product, start_date):
         """
@@ -170,6 +187,21 @@ class CoinbaseProHandler():
         :return: Extracted details from the retrieved JSON as a dict
         """
 
+        if not isinstance(product, str):
+            raise TypeError("ERROR: product must be of type str")
+
+        if not isinstance(start_date, str):
+            raise TypeError("ERROR: start_date must be of type str")
+
+        if not product:
+            raise ValueError("ERROR: product cannot be null")
+
+        if not start_date:
+            raise ValueError("ERROR: start_date cannot be null")
+
+        # Raises a ValueError if start_date is not in the right format
+        datetime.strptime(start_date, "%Y-%m-%d")
+
         fill_parameters = {"product_id": product + "-USD", "start_date": start_date}
 
         response = requests.get(
@@ -177,8 +209,7 @@ class CoinbaseProHandler():
         )
 
         if response.status_code != 200:
-            print("Could not find transaction details")
-            return {}
+            raise RuntimeError("ERROR: Could not find transaction details")
 
         # Parse the JSON response
         transaction = response.json()[0]
@@ -209,11 +240,11 @@ class CoinbaseProHandler():
         :return: True if the email is sent successfully; False otherwise
         """
 
-        success = False
+        if not isinstance(transaction_details, dict):
+            raise TypeError("ERROR: transaction_details must be of type dict")
 
         if not transaction_details:
-            print("Transaction details cannot be null")
-            return success
+            raise ValueError("ERROR: transaction_details cannot be null")
 
         product = transaction_details["product"]
         start_date = transaction_details["start_date"]
@@ -243,13 +274,13 @@ class CoinbaseProHandler():
             with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
                 smtp.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
                 smtp.send_message(msg)
-                success = True
+                return True
 
+        # It's okay if email doesn't work
         except smtplib.SMTPAuthenticationError:
-            print("Email credentials are not valid!")
-            pass
+            print("WARNING: Email credentials are not valid")
 
-        return success
+        return False
 
 
 class CoinbaseBot():
@@ -270,12 +301,26 @@ class CoinbaseBot():
         :param time: The time string in format HH:MM XM
         :return: datetime object representing the passed in date and time strings
         """
-        if not date or not time:
-            raise ValueError("date and time parameters cannot be null")
+
+        if not isinstance(date, str):
+            raise TypeError("ERROR: date must be of type str")
+
+        if not isinstance(time, str):
+            raise TypeError("ERROR: time must be of type str")
+
+        if not date:
+            raise ValueError("ERROR: date cannot be null")
+
+        if not time:
+            raise ValueError("ERROR: time cannot be null")
+
+        # Raises a ValueError is not in the correct formats
+        datetime.strptime(date, "%Y-%m-%d")
+        datetime.strptime(time, "%I:%M %p")
 
         date_and_time = date + " " + time
-        format = "%Y-%m-%d %I:%M %p"
-        date_and_time = datetime.strptime(date_and_time, format)
+        date_and_time = datetime.strptime(date_and_time, "%Y-%m-%d %I:%M %p")
+
         return date_and_time
 
     def update_frequency(self, new_frequency):
@@ -285,9 +330,12 @@ class CoinbaseBot():
         :param new_frequency: Valid values are "daily", "weekly", "biweekly", "monthly"
         :return: None
         """
+        
+        if not isinstance(new_frequency, str):
+            raise TypeError("ERROR: new_frequency must be of type str")
 
         if new_frequency not in FREQUENCY_TO_DAYS:
-            raise ValueError("ERROR: Invalid value for new_frequency.")
+            raise ValueError("ERROR: invalid value for new_frequency")
 
         self.time_delta = FREQUENCY_TO_DAYS[new_frequency]
 
@@ -324,9 +372,13 @@ class CoinbaseBot():
         :return: None
         """
 
-        if not kwargs:
-            return ValueError("orders cannot be null")
+        if not isinstance(kwargs, dict):
+            return TypeError("ERROR: kwargs must be of type dict")
 
+        if not kwargs:
+            return ValueError("ERROR: orders cannot be null")
+
+        # Clear current orders dict
         self.orders = {}
 
         for product, amount in kwargs.items():
@@ -351,7 +403,10 @@ class CoinbaseBot():
                 # Deposit from bank.
                 deposit_amount = sum(self.orders.values())
                 print(f"Depositing ${deposit_amount:.2f} into Coinbase Pro account. . .")
-                self.coinbase.deposit_from_bank(deposit_amount)
+
+                # deposit_from_bank() not supported in sandbox mode
+                if "sandbox" not in self.coinbase.api_url:
+                    self.coinbase.deposit_from_bank(deposit_amount)
 
                 # Update to the next deposit date.
                 self.update_deposit_date()
@@ -361,6 +416,13 @@ class CoinbaseBot():
                 # Place market orders.
                 for product, amount in self.orders.items():
                     print(f"Placing order for ${amount:.2f} of {product}. . .")
+
+                    # are_sufficient_funds_available() not supported in sandbox mode
+                    if "sandbox" not in self.coinbase.api_url:
+
+                        if not self.coinbase.are_sufficient_funds_available(amount):
+                            raise RuntimeError("User does not have sufficient funds for the current order")
+                    
                     self.coinbase.place_market_order(product, amount)
 
                     try:

@@ -23,7 +23,10 @@ def main():
 
     coinbase.set_orders(**user_inputs.orders)
 
-    coinbase.activate()
+    try:
+        coinbase.activate()
+    except Exception:
+        print("There was an error placing your order")
 
 
 if __name__ == "__main__":

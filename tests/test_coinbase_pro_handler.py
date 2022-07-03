@@ -33,119 +33,163 @@ class TestCoinbaseProHandler():
 
     todays_date = datetime.today().strftime('%Y-%m-%d')
 
+    sample_valid_transaction_details = {
+        "product": "BTC",
+        "start_date": "2022-01-01",
+        "coinbase_fee": ".10",
+        "amount_invested": "10",
+        "purchase_price": "100",
+        "purchase_amount": "0.1",
+        "total_amount": "9.90"
+    }
 
-    def test_get_payment_method_invalid_auth(self):
-        payment_id = self.invalid_coinbase_pro.get_payment_method()
-        assert payment_id == ""
+    sample_invalid_transaction_details = {
+        "product": "BTC",
+        "start_date": "2022-01-01",
+        "amount_invested": "10",
+        "purchase_price": "100",
+        "purchase_amount": "0.1",
+        "total_amount": "9.90"
+    }
+
+
+    def test_get_payment_method_invalid_auth_raises_runtime_error(self):
+        """Checks that payment method raises a RuntimeError if using invalid authorization"""
+
+        with pytest.raises(RuntimeError, match="Could not find payment method"):
+            self.invalid_coinbase_pro.get_payment_method()
+
 
     @pytest.mark.skipif(not NONEMPTY_API_CREDENTIALS, reason="No API credentials provided")
     def test_get_payment_method_valid_auth(self):
-        payment_id = self.valid_coinbase_pro.get_payment_method()
-        assert payment_id != ""
+        """Checks that get_payment_method() returns a nonempty string if using valid authorization"""
 
-    @pytest.mark.parametrize(
-        "amount,expected",
-        [
-            ("1", False),
-            (-1, False),
-            (0, False),
-            (50, False),
-        ]
-    )
-    def test_deposit_from_bank_invalid_auth(self, amount, expected):
-        success = self.invalid_coinbase_pro.deposit_from_bank(amount)
-        assert success == expected
+        assert self.valid_coinbase_pro.get_payment_method() != ""
+
+
+    def test_deposit_from_bank_invalid_auth_raises_runtime_error(self):
+        """Checks that depost_from_bank() raises a RuntimeError with invalid authorization"""
+
+        with pytest.raises(RuntimeError, match="Could not find payment method"):
+            self.invalid_coinbase_pro.deposit_from_bank(50)
+
+
+    @pytest.mark.skip(reason="deposit_from_bank() is not supported in sandbox mode")
+    @pytest.mark.skipif(not NONEMPTY_API_CREDENTIALS, reason="No API credentials provided")
+    def test_deposit_from_bank_valid_auth(self):
+        """Checks that deposit_from_bank() returns True with valid authorization and parameters"""
+
+        assert self.valid_coinbase_pro.deposit_from_bank(50)
+
+
+    def test_deposit_from_bank_invalid_parameters(self):
+        """Checks that deposit_from_bank() raises correct errors with invalid parameters"""
+        
+        with pytest.raises(TypeError, match="amount must be of type int or float"):
+            self.invalid_coinbase_pro.deposit_from_bank(None)
+            self.invalid_coinbase_pro.deposit_from_bank("50")
+            self.invalid_coinbase_pro.deposit_from_bank("")
+        
+        with pytest.raises(ValueError, match="amount must be a positive number"):
+            self.invalid_coinbase_pro.deposit_from_bank(0)
+            self.invalid_coinbase_pro.deposit_from_bank(-0.01)
+
+
+    def test_place_market_orders_invalid_auth_raises_runtime_error(self):
+        """Checks place_market_order() raises a RuntimeError with invalid authorization."""
+
+        with pytest.raises(RuntimeError, match="Could not place market order: "):
+            self.invalid_coinbase_pro.place_market_order("BTC", 50)
+
 
     @pytest.mark.skipif(not NONEMPTY_API_CREDENTIALS, reason="No API credentials provided")
-    @pytest.mark.parametrize(
-        "amount,expected",
-        [
-            ("1", False),
-            (-1, False),
-            (0, False),
-            (50, False),
-        ]
-    )
-    def test_deposit_from_bank_valid_auth(self, amount, expected):
-        success = self.valid_coinbase_pro.deposit_from_bank(amount)
-        assert success == expected
+    def test_place_market_order_valid_auth(self):
+        """Checks place_marker_order() returns true with valid authorization and parameters."""
+
+        assert self.valid_coinbase_pro.place_market_order("BTC", 50)
 
 
-    @pytest.mark.parametrize(
-        "product,amount,expected",
-        [
-            # Invalid Parameters
-            (None, None, False),
-            ("BTC", None, False),
-            (None, 10.00, False),
-            ("BTC", -5, False),
-            ("BTC", -0.01, False),
-            ("BTC", 10000000000, False),
+    def test_place_market_order_invalid_parameters(self):
+        """Checks place_marker_order() returns appropriate error with invalid parameters."""
 
-            # Valid Parameters
-            ("BTC", 10.00, False),
-            ("BTC", 1000, False),
-        ],
-    )
-    def test_place_market_orders_invalid_auth(self, product, amount, expected):
-        result = self.invalid_coinbase_pro.place_market_order(product, amount)
-        assert result == expected
+        with pytest.raises(TypeError, match="product must be of type str"):
+            self.invalid_coinbase_pro.place_market_order(100, 100)
+            self.invalid_coinbase_pro.place_market_order(None, 100)
 
-    @pytest.mark.skipif(not NONEMPTY_API_CREDENTIALS, reason="No API credentials provided")
-    @pytest.mark.parametrize(
-        "product,amount,expected",
-        [
-            # Invalid Parameters
-            (None, None, False),
-            ("BTC", None, False),
-            (None, 10.00, False),
-            ("BTC", -5, False),
-            ("BTC", -0.01, False),
-            ("BTC", 10000000000, False),
+        with pytest.raises(TypeError, match="amount must be of type int or float"):
+            self.invalid_coinbase_pro.place_market_order("BTC", "100")
+            self.invalid_coinbase_pro.place_market_order("BTC", "")
+            self.invalid_coinbase_pro.place_market_order("BTC", None)
 
-            # Valid Parameters
-            ("BTC", 10.00, True),
-            ("BTC", 1000, True),
-        ],
-    )
-    def test_place_market_order_valid_auth(self, product, amount, expected):
-        result = self.valid_coinbase_pro.place_market_order(product, amount)
-        assert result == expected
+        with pytest.raises(ValueError, match="product cannot be null"):
+            self.invalid_coinbase_pro.place_market_order("", 100)
 
-    def test_get_transaction_details_invalid_auth(self):
-        details = self.invalid_coinbase_pro.get_transaction_details("BTC", self.todays_date)
-        assert not bool(details)
+        with pytest.raises(ValueError, match="amount must be a positive number"):
+            self.invalid_coinbase_pro.place_market_order("BTC", 0)
+            self.invalid_coinbase_pro.place_market_order("BTC", -0.01)
+
+
+    def test_get_transaction_details_invalid_auth_raises_runtime_error(self):
+        """Checks get_transaction_details() raises a RuntimeError with invalid authorization."""
+
+        with pytest.raises(RuntimeError, match="Could not find transaction details"):
+            self.invalid_coinbase_pro.get_transaction_details("BTC", self.todays_date)
 
     @pytest.mark.skipif(not NONEMPTY_API_CREDENTIALS, reason="No API credentials provided")
     def test_get_transaction_details_valid_auth(self):
-        details = self.invalid_coinbase_pro.get_transaction_details("BTC", self.todays_date)
-        print(details)
+        """Checks that get_transaction_details() returns nonempty dict with valid authorization."""
+
+        details = self.valid_coinbase_pro.get_transaction_details("BTC", self.todays_date)
         assert bool(details)
+
+
+    def test_get_transaction_details_invalid_parameters(self):
+        """Checks get_transaction_details() raises appropriate errors with invalid parameters."""
+
+        with pytest.raises(TypeError, match="product must be of type str"):
+            self.invalid_coinbase_pro.get_transaction_details(100, "2022-01-01")
+            self.invalid_coinbase_pro.get_transaction_details(None, "2022-01-01")
+
+        with pytest.raises(TypeError, match="start_date must be of type str"):
+            self.invalid_coinbase_pro.get_transaction_details("BTC", 100)
+            self.invalid_coinbase_pro.get_transaction_details("BTC", None)
+
+        with pytest.raises(ValueError, match="product cannot be null"):
+            self.invalid_coinbase_pro.get_transaction_details("", "2022-01-01")
+
+        with pytest.raises(ValueError, match="start_date cannot be null"):
+            self.invalid_coinbase_pro.get_transaction_details("BTC", "")
+
+        with pytest.raises(ValueError, match="does not match format"):
+            self.invalid_coinbase_pro.get_transaction_details("BTC", "01/31/2022")
+            self.invalid_coinbase_pro.get_transaction_details("BTC", "01-31-2022")
+            self.invalid_coinbase_pro.get_transaction_details("BTC", "31/01/2022")
+
 
     @pytest.mark.skipif(NONEMPTY_EMAIL_CREDENTIALS, reason="Email credentials are provided")
     def test_send_email_confirmation_invalid_email_credentials(self):
-        transaction_details = {
-            "product": "BTC",
-            "start_date": "2022-01-01",
-            "coinbase_fee": ".10",
-            "amount_invested": "10",
-            "purchase_price": "100",
-            "purchase_amount": "0.1",
-            "total_amount": "9.90"
-        }
-        success = self.invalid_coinbase_pro.send_email_confirmation(transaction_details)
-        assert not success
+        """Checks if send_email_confirmation() return False with invalid email credentials."""
+
+        assert not self.invalid_coinbase_pro.send_email_confirmation(self.sample_valid_transaction_details)
+
 
     @pytest.mark.skipif(not NONEMPTY_EMAIL_CREDENTIALS, reason="No email credentials provided")
     def test_send_email_confirmation_valid_email_credentials(self):
-        transaction_details = {
-            "product": "BTC",
-            "start_date": "2022-01-01",
-            "coinbase_fee": ".10",
-            "amount_invested": "10",
-            "purchase_price": "100",
-            "purchase_amount": "0.1",
-            "total_amount": "9.90"
-        }
-        success = self.valid_coinbase_pro.send_email_confirmation(transaction_details)
-        assert success
+        """Checks if send_email_confirmation() returns True with valid email credentials"""
+
+        assert self.valid_coinbase_pro.send_email_confirmation(self.sample_valid_transaction_details)
+
+
+    def test_send_email_confirmation_invalid_parameters(self):
+        """Checks if send_email_confirmation() returns correct errors with invalid parameters."""
+
+        with pytest.raises(TypeError, match="transaction_details must be of type dict"):
+            self.invalid_coinbase_pro.send_email_confirmation(None)
+            self.invalid_coinbase_pro.send_email_confirmation(100)
+            self.invalid_coinbase_pro.send_email_confirmation("")
+
+        with pytest.raises(ValueError, match="transaction_details cannot be null"):
+            self.invalid_coinbase_pro.send_email_confirmation({})
+
+        with pytest.raises(KeyError):
+            self.invalid_coinbase_pro.send_email_confirmation(self.sample_invalid_transaction_details)
