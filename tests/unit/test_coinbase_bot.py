@@ -1,12 +1,12 @@
 import pytest
 import sys
 
-from coinbase.coinbase_bot import CoinbaseBot
-from coinbase.coinbase_bot import CoinbaseExchangeAuth
-from coinbase.frequency import FREQUENCY_TO_DAYS
-from config import CB_API_KEY_TEST
-from config import CB_API_PASS_TEST
-from config import CB_API_SECRET_TEST
+from src.coinbase.coinbase_bot import CoinbaseBot
+from src.coinbase.coinbase_bot import CoinbaseExchangeAuth
+from src.coinbase.frequency import FREQUENCY_TO_DAYS
+from src.coinbase.configs import CB_API_KEY_TEST
+from src.coinbase.configs import CB_API_PASS_TEST
+from src.coinbase.configs import CB_API_SECRET_TEST
 from datetime import datetime
 from datetime import timedelta
 from threading import Thread

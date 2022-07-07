@@ -5,13 +5,13 @@ import json
 import requests
 import smtplib
 
-from config import EMAIL_ADDRESS
-from config import EMAIL_PASSWORD
-from coinbase.frequency import FREQUENCY_TO_DAYS
 from datetime import datetime
 from datetime import timedelta
 from email.message import EmailMessage
 from requests.auth import AuthBase
+from src.coinbase.configs import EMAIL_ADDRESS
+from src.coinbase.configs import EMAIL_PASSWORD
+from src.coinbase.frequency import FREQUENCY_TO_DAYS
 from time import sleep
 from time import time
 

@@ -1,10 +1,10 @@
-from config import CB_API_KEY
-from config import CB_API_PASS
-from config import CB_API_SECRET
-from coinbase.coinbase_bot import CoinbaseBot
-from coinbase.coinbase_bot import CoinbaseExchangeAuth
-from coinbase.coinbase_bot import COINBASE_API_URL
-from coinbase.input_collection import InputCollector
+from src.coinbase.configs import CB_API_KEY
+from src.coinbase.configs import CB_API_PASS
+from src.coinbase.configs import CB_API_SECRET
+from src.coinbase.coinbase_bot import CoinbaseBot
+from src.coinbase.coinbase_bot import CoinbaseExchangeAuth
+from src.coinbase.coinbase_bot import COINBASE_API_URL
+from src.coinbase.input_collection import InputCollector
 
 
 def main():

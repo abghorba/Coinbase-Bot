@@ -1,6 +1,6 @@
 import requests
 
-from coinbase.frequency import FREQUENCY_TO_DAYS
+from src.coinbase.frequency import FREQUENCY_TO_DAYS
 from datetime import datetime
 
 

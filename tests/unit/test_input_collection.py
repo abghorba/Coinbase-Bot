@@ -1,6 +1,6 @@
 import pytest
 
-from coinbase.input_collection import InputCollector
+from src.coinbase.input_collection import InputCollector
 from datetime import date
 from datetime import datetime
 from datetime import timedelta
