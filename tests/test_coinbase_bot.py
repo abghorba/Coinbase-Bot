@@ -1,4 +1,5 @@
 import pytest
+import sys
 
 from coinbase.coinbase_bot import CoinbaseBot
 from coinbase.coinbase_bot import CoinbaseExchangeAuth
@@ -9,6 +10,7 @@ from config import CB_API_SECRET_TEST
 from datetime import datetime
 from datetime import timedelta
 from threading import Thread
+from time import sleep
 
 
 SANDBOX_API_URL = "https://api-public.sandbox.pro.coinbase.com/"
@@ -254,7 +256,7 @@ class TestCoinbaseBot():
         assert self.coinbase.orders == new_orders
 
 
-    # @pytest.mark.skip()
+    # Ensure that this test runs last!
     def test_activate(self):
         """Checks that the activate function works accordingly"""
 
@@ -290,11 +292,14 @@ class TestCoinbaseBot():
 
             self.coinbase.set_orders(**orders)
 
-            # Create thread to do self.coinbase.activate()
-            t = Thread(target=self.coinbase.activate)
-            t.daemon = True
-            t.start()
-            t.join(thread_timeout_seconds)
+            # Create thread to do self.coinbase.activate() on first iteration
+            if iteration == 1:
+                t = Thread(target=self.coinbase.activate)
+                t.daemon = True
+                t.start()
+
+            sleep(thread_timeout_seconds)
 
             assert self.coinbase.next_deposit_date == current_deposit_date + self.coinbase.time_delta
             assert self.coinbase.next_purchase_date == current_purchase_date + self.coinbase.time_delta
+            
