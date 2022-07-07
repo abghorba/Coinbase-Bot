@@ -271,7 +271,7 @@ class TestCoinbaseBot():
 
             current_datetime = datetime.today().replace(second=0, microsecond=0)
     
-            print(f"current_datetime = {current_datetime}")
+            print(f"This iteration starts at time = {current_datetime}")
 
             current_datetime_plus_one_minute = current_datetime + timedelta(minutes=1)
             current_datetime_plus_two_minutes = current_datetime + timedelta(minutes=2)

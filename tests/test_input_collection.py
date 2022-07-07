@@ -23,10 +23,8 @@ class TestInputCollector():
     new_year_date = date(next_year, 1, 1).strftime('%Y-%m-%d')
 
     current_time = todays_datetime.strftime("%I:%M %p")
-    current_time_minus_thirty_minutes = (todays_datetime + timedelta(minutes=-30)).strftime("%I:%M %p")
-    current_time_minus_one_hour = (todays_datetime + timedelta(hours=-1)).strftime("%I:%M %p")
-    current_time_plus_thirty_minutes = (todays_datetime + timedelta(minutes=30)).strftime("%I:%M %p")
-    current_time_plus_one_hour = (todays_datetime + timedelta(hours=1)).strftime("%I:%M %p")
+    current_time_minus_one_minute = (todays_datetime + timedelta(minutes=-1)).strftime("%I:%M %p")
+    current_time_plus_one_minute = (todays_datetime + timedelta(minutes=1)).strftime("%I:%M %p")
 
     @pytest.mark.parametrize(
         "date_string,expected",
@@ -65,15 +63,13 @@ class TestInputCollector():
             ("10:00am", False),
 
             # Valid Parameters
-            (current_time_minus_one_hour, False),
-            (current_time_minus_thirty_minutes, False),
+            (current_time_minus_one_minute, False),
             (current_time, False),
-            (current_time_plus_thirty_minutes, True),
-            (current_time_plus_one_hour, True),
+            (current_time_plus_one_minute, True),
         ]
     )
     def test_is_valid_start_time_if_start_date_is_today(self, time_string, expected):
-        """Tests if the input is a valid start time if the valid start date is today."""
+        """Tests if the input is a valid start time assuming the valid start date is today."""
 
         self.input_collector.start_date_is_today = True
         result = self.input_collector.is_valid_start_time(time_string)
@@ -90,11 +86,9 @@ class TestInputCollector():
             ("10:00am", False),
 
             # Valid Parameters
-            (current_time_minus_one_hour, True),
-            (current_time_minus_thirty_minutes, True),
+            (current_time_minus_one_minute, True),
             (current_time, True),
-            (current_time_plus_thirty_minutes, True),
-            (current_time_plus_one_hour, True),
+            (current_time_plus_one_minute, True),
         ]
     )
     def test_is_valid_start_time_if_start_date_is_not_today(self, time_string, expected):
@@ -147,7 +141,7 @@ class TestInputCollector():
         ]
     )
     def test_is_valid_crypto(self, crypto, expected):
-        """Tests if the input is a valid frequency."""
+        """Tests if the input is a valid crypto."""
 
         result = self.input_collector.is_valid_crypto(crypto)
         assert result == expected
@@ -164,12 +158,14 @@ class TestInputCollector():
             (10, False),
             ("?!?", False),
             ("123abc", False),
-            ("$10", False),
+            ("-1", False),
 
             # Valid Parameters
             ("0", False),
+            ("1", True),
             ("5.00", True),
             ("100", True),
+            ("1500.69", True)
         ]
     )
     def test_is_valid_dollar_amount(self, amount, expected):

@@ -407,6 +407,8 @@ class CoinbaseBot():
                 # deposit_from_bank() not supported in sandbox mode
                 if "sandbox" not in self.coinbase.api_url:
                     self.coinbase.deposit_from_bank(deposit_amount)
+                else:
+                    print("WARNING: deposit_from_bank() is not supported in sandbox mode")
 
                 # Update to the next deposit date.
                 self.update_deposit_date()
@@ -422,6 +424,9 @@ class CoinbaseBot():
 
                         if not self.coinbase.are_sufficient_funds_available(amount):
                             raise RuntimeError("User does not have sufficient funds for the current order")
+                    
+                    else:
+                        print("WARNING: are_sufficient_funds_available() not supported in sandbox mode")
                     
                     self.coinbase.place_market_order(product, amount)
 
