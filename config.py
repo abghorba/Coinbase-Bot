@@ -2,6 +2,7 @@ import os
 
 from dotenv import load_dotenv
 
+
 # Load environment variables
 path_to_dotenv_file = os.getcwd() + "/.env"
 load_dotenv(path_to_dotenv_file)

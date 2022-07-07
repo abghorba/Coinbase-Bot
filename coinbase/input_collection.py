@@ -1,4 +1,3 @@
-from pickle import FALSE
 import requests
 
 from coinbase.frequency import FREQUENCY_TO_DAYS
@@ -197,7 +196,6 @@ class InputCollector():
 
         return True
 
-
     def is_valid_dollar_amount(self, dollar_amount):
         """
         Checks if the dollar amount string is valid.
@@ -216,10 +214,14 @@ class InputCollector():
 
         # Check for value errors
         try:
-            float(dollar_amount)
+            assert float(dollar_amount) > 0
 
         except ValueError:
             print("The dollar amount must be a numerical value.")
+            return False
+
+        except AssertionError:
+            print("The dollar amount must be greater than 0")
             return False
 
         return True
