@@ -2,11 +2,11 @@ import pytest
 
 from src.coinbase.coinbase_bot import CoinbaseExchangeAuth
 from src.coinbase.coinbase_bot import CoinbaseProHandler
-from src.coinbase.configs import CB_API_KEY_TEST
-from src.coinbase.configs import CB_API_PASS_TEST
-from src.coinbase.configs import CB_API_SECRET_TEST
-from src.coinbase.configs import EMAIL_ADDRESS
-from src.coinbase.configs import EMAIL_PASSWORD
+from src.coinbase.utilities import CB_API_KEY_TEST
+from src.coinbase.utilities import CB_API_PASS_TEST
+from src.coinbase.utilities import CB_API_SECRET_TEST
+from src.coinbase.utilities import EMAIL_ADDRESS
+from src.coinbase.utilities import EMAIL_PASSWORD
 from datetime import datetime
 
 
