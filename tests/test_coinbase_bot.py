@@ -1,15 +1,11 @@
 import pytest
-
-from src.coinbase.coinbase_bot import CoinbaseBot
-from src.coinbase.coinbase_bot import CoinbaseExchangeAuth
-from src.coinbase.frequency import FREQUENCY_TO_DAYS
-from src.coinbase.utilities import CB_API_KEY_TEST
-from src.coinbase.utilities import CB_API_PASS_TEST
-from src.coinbase.utilities import CB_API_SECRET_TEST
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 from threading import Thread
 from time import sleep
+
+from src.coinbase.coinbase_bot import CoinbaseBot, CoinbaseExchangeAuth
+from src.coinbase.frequency import FREQUENCY_TO_DAYS
+from src.coinbase.utilities import CB_API_KEY_TEST, CB_API_PASS_TEST, CB_API_SECRET_TEST
 
 
 SANDBOX_API_URL = "https://api-public.sandbox.pro.coinbase.com/"
@@ -51,7 +47,6 @@ class TestCoinbaseBot():
         start_time=start_time,
     )
 
-
     def test_parse_to_datetime_with_invalid_parameters(self):
         """Checks that parse_to_datetime() returns correct errors with invalid parameters."""
 
@@ -75,14 +70,12 @@ class TestCoinbaseBot():
             self.coinbase.parse_to_datetime("2022-01-01", "10:00AM")
             self.coinbase.parse_to_datetime("2022-01-01", "10:00:00 AM")
 
-
     def test_parse_to_datetime(self):
         """Checks parse_to_datetime() parses datetimes correctly with valid parameters."""
 
         datetime_ = self.coinbase.parse_to_datetime("2022-01-01", "10:00 AM")
         expected_datetime = datetime(2022, 1, 1, 10, 0, 0)
         assert datetime_ == expected_datetime
-
 
     def test_update_frequency_with_invalid_parameters(self):
         """Checks update_frequency() raises correct errors with invalid parameters."""
@@ -93,7 +86,6 @@ class TestCoinbaseBot():
         
         assert self.coinbase.time_delta == FREQUENCY_TO_DAYS[self.start_frequency]
 
-
     def test_update_frequency_invalid_frequency_raises_value_error(self):
         """Checks that invalid frequencies raise a ValueError."""
 
@@ -102,7 +94,6 @@ class TestCoinbaseBot():
             self.coinbase.update_frequency("annually")
 
         assert self.coinbase.time_delta == FREQUENCY_TO_DAYS[self.start_frequency]
-
 
     @pytest.mark.parametrize(
         "new_frequency,expected_time_delta",
@@ -118,7 +109,6 @@ class TestCoinbaseBot():
 
         self.coinbase.update_frequency(new_frequency)
         assert self.coinbase.time_delta == expected_time_delta
-
 
     @pytest.mark.parametrize(
         "frequency,expected_date",
@@ -139,7 +129,6 @@ class TestCoinbaseBot():
         # Need to revert back to original deposit date
         self.coinbase.next_deposit_date = self.first_deposit_date
 
-
     def test_update_deposit_date_after_failed_frequency_change(self):
         """Checks that update_deposit_date() works correctly if we have a failed frequency change."""
 
@@ -154,7 +143,6 @@ class TestCoinbaseBot():
        
         # Need to revert back to original deposit date
         self.coinbase.next_deposit_date = self.first_deposit_date
-
 
     @pytest.mark.parametrize(
         "frequency,expected_date",
@@ -175,7 +163,6 @@ class TestCoinbaseBot():
         # Need to revert back to original purchase date
         self.coinbase.next_purchase_date = self.first_purchase_date
 
-
     def test_update_purchase_date_after_failed_frequency_change(self):
         """Checks that update_purchase_date() works correctly after a failed frequency change."""
         
@@ -190,7 +177,6 @@ class TestCoinbaseBot():
 
         # Need to revert back to original purchase date
         self.coinbase.next_purchase_date = self.first_purchase_date
-
 
     @pytest.mark.parametrize(
         "deposit_date,expected",
@@ -209,7 +195,6 @@ class TestCoinbaseBot():
         # Need to revert back to original deposit date
         self.coinbase.next_deposit_date = self.first_deposit_date
 
-
     @pytest.mark.parametrize(
         "purchase_date,expected",
         [ 
@@ -227,7 +212,6 @@ class TestCoinbaseBot():
         # Need to revert back to original purchase date
         self.coinbase.next_purchase_date = self.first_purchase_date
 
-
     def test_set_orders_with_invalid_parameters(self):
         
         with pytest.raises(TypeError, match="set_orders\\(\\) takes 1 positional argument but 2 were given"):
@@ -238,7 +222,6 @@ class TestCoinbaseBot():
         with pytest.raises(TypeError, match="set_orders\\(\\) argument after \\*\\* must be a mapping, not"):
             self.coinbase.set_orders(**"HI")
             self.coinbase.set_orders(**None)
-
 
     @pytest.mark.parametrize(
         "new_orders",
@@ -300,4 +283,3 @@ class TestCoinbaseBot():
 
             assert self.coinbase.next_deposit_date == current_deposit_date + self.coinbase.time_delta
             assert self.coinbase.next_purchase_date == current_purchase_date + self.coinbase.time_delta
-            

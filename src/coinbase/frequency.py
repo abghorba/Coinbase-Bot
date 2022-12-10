@@ -1,6 +1,7 @@
 from datetime import timedelta
 from dateutil.relativedelta import relativedelta
 
+
 FREQUENCY_TO_DAYS = {
     "daily": timedelta(days=1),
     "weekly": timedelta(days=7),

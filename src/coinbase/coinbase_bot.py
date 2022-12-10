@@ -4,16 +4,13 @@ import hmac
 import json
 import requests
 import smtplib
-
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 from email.message import EmailMessage
 from requests.auth import AuthBase
-from src.coinbase.utilities import EMAIL_ADDRESS
-from src.coinbase.utilities import EMAIL_PASSWORD
+from time import sleep, time
+
+from src.coinbase.utilities import EMAIL_ADDRESS, EMAIL_PASSWORD
 from src.coinbase.frequency import FREQUENCY_TO_DAYS
-from time import sleep
-from time import time
 
 
 COINBASE_API_URL = "https://api.pro.coinbase.com/"
@@ -49,7 +46,7 @@ class CoinbaseExchangeAuth(AuthBase):
 
 
 # Create custom handler for placing orders
-class CoinbaseProHandler():
+class CoinbaseProHandler:
 
     def __init__(self, api_url, auth):
         self.api_url = api_url
@@ -57,8 +54,7 @@ class CoinbaseProHandler():
 
     def get_payment_method(self):
         """
-        Retrieves the user's bank from Coinbase Pro
-        profile.
+        Retrieves the user's bank from Coinbase Pro profile.
 
         :return: The user's bank ID as a string
         """
@@ -74,8 +70,7 @@ class CoinbaseProHandler():
 
     def deposit_from_bank(self, amount):
         """
-        Deposits USD from user's bank account
-        into their USD Wallet on Coinbase Pro.
+        Deposits USD from user's bank account into their USD Wallet on Coinbase Pro.
 
         :param amount: The amount of USD to deposit
         :return: True if deposit is successful
@@ -137,8 +132,7 @@ class CoinbaseProHandler():
 
     def place_market_order(self, product, amount):
         """
-        Places a market order for specified
-        product with a specified amount of USD.
+        Places a market order for specified product with a specified amount of USD.
 
         :param product: The cryptocurrency to purchase as a string
         :param amount: The amount of USD to make a purchase with
@@ -233,8 +227,7 @@ class CoinbaseProHandler():
 
     def send_email_confirmation(self, transaction_details):
         """
-        Send's user a confirmation email with
-        the details of the transaction.
+        Sends user a confirmation email with the details of the transaction.
 
         :param transaction_details: Dict containing transaction details
         :return: True if the email is sent successfully; False otherwise
@@ -283,7 +276,7 @@ class CoinbaseProHandler():
         return False
 
 
-class CoinbaseBot():
+class CoinbaseBot:
 
     def __init__(self, api_url, auth, frequency, start_date, start_time, orders={}):
         self.coinbase = CoinbaseProHandler(api_url, auth)
@@ -294,8 +287,7 @@ class CoinbaseBot():
 
     def parse_to_datetime(self, date, time):
         """
-        Parses both a date string and a time string into one datetime
-        object.
+        Parses both a date string and a time string into one datetime object.
 
         :param date: The date string in format YYYY-MM-DD
         :param time: The time string in format HH:MM XM
@@ -386,8 +378,7 @@ class CoinbaseBot():
 
     def activate(self):
         """
-        Activates the coinbase bot and performs transactions
-        based on the dates and conditions.
+        Activates the coinbase bot and performs transactions based on the dates and conditions.
 
         :return: None
         """

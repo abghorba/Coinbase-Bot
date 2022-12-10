@@ -1,12 +1,10 @@
 import pytest
+from datetime import date, datetime, timedelta
 
 from src.coinbase.input_collection import InputCollector
-from datetime import date
-from datetime import datetime
-from datetime import timedelta
 
 
-class TestInputCollector():
+class TestInputCollector:
 
     input_collector = InputCollector()
 
@@ -173,4 +171,3 @@ class TestInputCollector():
 
         result = self.input_collector.is_valid_dollar_amount(amount)
         assert result == expected
-        

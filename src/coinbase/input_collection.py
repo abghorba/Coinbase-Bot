@@ -1,16 +1,22 @@
 import requests
+from datetime import datetime
 
 from src.coinbase.frequency import FREQUENCY_TO_DAYS
-from datetime import datetime
 
 
 BASE_URL = "https://api.exchange.coinbase.com/currencies/"
 
 
-class InputCollector():
+class InputCollector:
 
     def __init__(self):
         self.start_date_is_today = False
+
+        # collect_inputs()
+        self.start_date = None
+        self.start_time = None
+        self.frequency = None
+        self.orders = None
 
     def is_valid_start_date(self, date_string):
         """
@@ -30,16 +36,15 @@ class InputCollector():
 
         # Make sure it's a valid date
         try:
-            format = "%Y-%m-%d"
-            converted_date = datetime.strptime(date_string, format)
+            date_format = "%Y-%m-%d"
+            converted_date = datetime.strptime(date_string, date_format)
 
         except ValueError:
             print("This date does not exist!")
             return False
 
         # Make sure the date isn't before the current day
-        current_date = datetime.now().replace(hour=0, minute=0, 
-                                                second=0, microsecond=0)
+        current_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
 
         if converted_date < current_date:
             print("The date must occur on or after the current date.")
@@ -71,7 +76,7 @@ class InputCollector():
         """
         Checks if provided time string is valid.
 
-        :param date_string: str
+        :param time_string: str
         :return: True if valid; False otherwise
         """
 
@@ -98,9 +103,7 @@ class InputCollector():
             current_time = datetime.now().time()
 
             if converted_time < current_time:
-                print(
-                    "The chosen start date is today. The time of the transaction must occur after the current time."
-                )
+                print("The chosen start date is today. The time of the transaction must occur after the current time.")
                 return False
 
         return True
@@ -159,9 +162,8 @@ class InputCollector():
 
         while not valid_frequency:
 
-            frequency = input(
-                'How often would you like to make purchases? Valid values include "daily", "weekly", "biweekly", and "monthly": '
-            )
+            frequency = input('How often would you like to make purchases? Valid values include "daily", "weekly", '
+                              '"biweekly", and "monthly": ')
 
             valid_frequency = self.is_valid_frequency(frequency)
 
@@ -250,9 +252,8 @@ class InputCollector():
 
             # There is already a pending order for the inputted cryptocurrency
             if crypto in orders:
-                overwrite_order = input(
-                    "There is already a pending order for this cryptocurrency. Continuing will overwrite the previous order. Continue? Y/N "
-                )
+                overwrite_order = input("There is already a pending order for this cryptocurrency. Continuing will "
+                                        "overwrite the previous order. Continue? Y/N ")
 
                 if overwrite_order == "N" or overwrite_order == "n":
                     continue
@@ -283,4 +284,3 @@ class InputCollector():
         self.start_time = self.get_start_time()
         self.frequency = self.get_frequency()
         self.orders = self.get_orders()
-
