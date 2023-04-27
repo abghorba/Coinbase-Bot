@@ -2,25 +2,23 @@ import base64
 import hashlib
 import hmac
 import json
-import requests
 import smtplib
 from datetime import datetime, timedelta
 from email.message import EmailMessage
-from requests.auth import AuthBase
 from time import sleep, time
 
-from src.coinbase.utilities import EMAIL_ADDRESS, EMAIL_PASSWORD
-from src.coinbase.frequency import FREQUENCY_TO_DAYS
+import requests
+from requests.auth import AuthBase
 
+from src.coinbase.frequency import FREQUENCY_TO_DAYS
+from src.coinbase.utilities import EMAIL_ADDRESS, EMAIL_PASSWORD
 
 COINBASE_API_URL = "https://api.pro.coinbase.com/"
 
 
 # Create custom authentication for Exchange.
 class CoinbaseExchangeAuth(AuthBase):
-
     def __init__(self, api_key, secret_key, passphrase):
-        
         self.api_key = api_key
         self.secret_key = secret_key
         self.passphrase = passphrase
@@ -47,7 +45,6 @@ class CoinbaseExchangeAuth(AuthBase):
 
 # Create custom handler for placing orders
 class CoinbaseProHandler:
-
     def __init__(self, api_url, auth):
         self.api_url = api_url
         self.auth = auth
@@ -62,7 +59,9 @@ class CoinbaseProHandler:
         response = requests.get(self.api_url + "payment-methods", auth=self.auth)
 
         if response.status_code != 200:
-            raise RuntimeError(f"ERROR: Could not find payment method: {response.content}")
+            raise RuntimeError(
+                f"ERROR: Could not find payment method: {response.content}"
+            )
 
         print("SUCCESS: Retrieved payment method")
 
@@ -95,7 +94,9 @@ class CoinbaseProHandler:
         )
 
         if response.status_code != 200:
-            raise RuntimeError(f"ERROR: Could not make deposit to Coinbase Pro account: {response.content}")
+            raise RuntimeError(
+                f"ERROR: Could not make deposit to Coinbase Pro account: {response.content}"
+            )
 
         print(f"SUCCESS: Deposited ${amount:.2f} to Coinbase Pro account.")
         return True
@@ -117,7 +118,9 @@ class CoinbaseProHandler:
         response = requests.get(self.api_url + "coinbase-accounts", auth=self.auth)
 
         if response.status_code != 200:
-            raise RuntimeError(f"ERROR: are_sufficient_funds_available() reported a failure")
+            raise RuntimeError(
+                f"ERROR: are_sufficient_funds_available() reported a failure"
+            )
 
         coinbase_wallets = response.json()
 
@@ -127,7 +130,7 @@ class CoinbaseProHandler:
             if wallet["name"] == "Cash (USD)" and wallet["currency"] == "USD":
                 available_balance = float(wallet["balance"])
                 break
-        
+
         return available_balance >= amount
 
     def place_market_order(self, product, amount):
@@ -248,7 +251,9 @@ class CoinbaseProHandler:
         total_amount = transaction_details["total_amount"]
 
         msg = EmailMessage()
-        msg["Subject"] = f"Your Purchase of ${total_amount} of {product} Was Successful!"
+        msg[
+            "Subject"
+        ] = f"Your Purchase of ${total_amount} of {product} Was Successful!"
         msg["From"] = EMAIL_ADDRESS
         msg["To"] = EMAIL_ADDRESS
 
@@ -263,7 +268,6 @@ class CoinbaseProHandler:
         msg.set_content(content)
 
         try:
-
             with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
                 smtp.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
                 smtp.send_message(msg)
@@ -277,7 +281,6 @@ class CoinbaseProHandler:
 
 
 class CoinbaseBot:
-
     def __init__(self, api_url, auth, frequency, start_date, start_time, orders={}):
         self.coinbase = CoinbaseProHandler(api_url, auth)
         self.time_delta = FREQUENCY_TO_DAYS[frequency]
@@ -322,7 +325,7 @@ class CoinbaseBot:
         :param new_frequency: Valid values are "daily", "weekly", "biweekly", "monthly"
         :return: None
         """
-        
+
         if not isinstance(new_frequency, str):
             raise TypeError("ERROR: new_frequency must be of type str")
 
@@ -387,38 +390,42 @@ class CoinbaseBot:
         print(f"Next purchasing date: {self.next_purchase_date}")
 
         while True:
-
             # If our conditions are met, initiate transactions.
             if self.is_time_to_deposit():
-
                 # Deposit from bank.
                 deposit_amount = sum(self.orders.values())
-                print(f"Depositing ${deposit_amount:.2f} into Coinbase Pro account. . .")
+                print(
+                    f"Depositing ${deposit_amount:.2f} into Coinbase Pro account. . ."
+                )
 
                 # deposit_from_bank() not supported in sandbox mode
                 if "sandbox" not in self.coinbase.api_url:
                     self.coinbase.deposit_from_bank(deposit_amount)
                 else:
-                    print("WARNING: deposit_from_bank() is not supported in sandbox mode")
+                    print(
+                        "WARNING: deposit_from_bank() is not supported in sandbox mode"
+                    )
 
                 # Update to the next deposit date.
                 self.update_deposit_date()
 
             if self.is_time_to_purchase():
-
                 # Place market orders.
                 for product, amount in self.orders.items():
                     print(f"Placing order for ${amount:.2f} of {product}. . .")
 
                     # are_sufficient_funds_available() not supported in sandbox mode
                     if "sandbox" not in self.coinbase.api_url:
-
                         if not self.coinbase.are_sufficient_funds_available(amount):
-                            raise RuntimeError("User does not have sufficient funds for the current order")
-                    
+                            raise RuntimeError(
+                                "User does not have sufficient funds for the current order"
+                            )
+
                     else:
-                        print("WARNING: are_sufficient_funds_available() not supported in sandbox mode")
-                    
+                        print(
+                            "WARNING: are_sufficient_funds_available() not supported in sandbox mode"
+                        )
+
                     self.coinbase.place_market_order(product, amount)
 
                     try:
