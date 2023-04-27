@@ -59,9 +59,7 @@ class CoinbaseProHandler:
         response = requests.get(self.api_url + "payment-methods", auth=self.auth)
 
         if response.status_code != 200:
-            raise RuntimeError(
-                f"ERROR: Could not find payment method: {response.content}"
-            )
+            raise RuntimeError(f"ERROR: Could not find payment method: {response.content}")
 
         print("SUCCESS: Retrieved payment method")
 
@@ -94,9 +92,7 @@ class CoinbaseProHandler:
         )
 
         if response.status_code != 200:
-            raise RuntimeError(
-                f"ERROR: Could not make deposit to Coinbase Pro account: {response.content}"
-            )
+            raise RuntimeError(f"ERROR: Could not make deposit to Coinbase Pro account: {response.content}")
 
         print(f"SUCCESS: Deposited ${amount:.2f} to Coinbase Pro account.")
         return True
@@ -118,9 +114,7 @@ class CoinbaseProHandler:
         response = requests.get(self.api_url + "coinbase-accounts", auth=self.auth)
 
         if response.status_code != 200:
-            raise RuntimeError(
-                f"ERROR: are_sufficient_funds_available() reported a failure"
-            )
+            raise RuntimeError(f"ERROR: are_sufficient_funds_available() reported a failure")
 
         coinbase_wallets = response.json()
 
@@ -161,9 +155,7 @@ class CoinbaseProHandler:
             "funds": amount,
         }
 
-        response = requests.post(
-            self.api_url + "orders", data=json.dumps(market_order), auth=self.auth
-        )
+        response = requests.post(self.api_url + "orders", data=json.dumps(market_order), auth=self.auth)
 
         if response.status_code != 200:
             raise RuntimeError(f"Could not place market order: {response.content}")
@@ -201,9 +193,7 @@ class CoinbaseProHandler:
 
         fill_parameters = {"product_id": product + "-USD", "start_date": start_date}
 
-        response = requests.get(
-            self.api_url + "fills", params=fill_parameters, auth=self.auth
-        )
+        response = requests.get(self.api_url + "fills", params=fill_parameters, auth=self.auth)
 
         if response.status_code != 200:
             raise RuntimeError("ERROR: Could not find transaction details")
@@ -251,9 +241,7 @@ class CoinbaseProHandler:
         total_amount = transaction_details["total_amount"]
 
         msg = EmailMessage()
-        msg[
-            "Subject"
-        ] = f"Your Purchase of ${total_amount} of {product} Was Successful!"
+        msg["Subject"] = f"Your Purchase of ${total_amount} of {product} Was Successful!"
         msg["From"] = EMAIL_ADDRESS
         msg["To"] = EMAIL_ADDRESS
 
@@ -394,17 +382,13 @@ class CoinbaseBot:
             if self.is_time_to_deposit():
                 # Deposit from bank.
                 deposit_amount = sum(self.orders.values())
-                print(
-                    f"Depositing ${deposit_amount:.2f} into Coinbase Pro account. . ."
-                )
+                print(f"Depositing ${deposit_amount:.2f} into Coinbase Pro account. . .")
 
                 # deposit_from_bank() not supported in sandbox mode
                 if "sandbox" not in self.coinbase.api_url:
                     self.coinbase.deposit_from_bank(deposit_amount)
                 else:
-                    print(
-                        "WARNING: deposit_from_bank() is not supported in sandbox mode"
-                    )
+                    print("WARNING: deposit_from_bank() is not supported in sandbox mode")
 
                 # Update to the next deposit date.
                 self.update_deposit_date()
@@ -417,22 +401,16 @@ class CoinbaseBot:
                     # are_sufficient_funds_available() not supported in sandbox mode
                     if "sandbox" not in self.coinbase.api_url:
                         if not self.coinbase.are_sufficient_funds_available(amount):
-                            raise RuntimeError(
-                                "User does not have sufficient funds for the current order"
-                            )
+                            raise RuntimeError("User does not have sufficient funds for the current order")
 
                     else:
-                        print(
-                            "WARNING: are_sufficient_funds_available() not supported in sandbox mode"
-                        )
+                        print("WARNING: are_sufficient_funds_available() not supported in sandbox mode")
 
                     self.coinbase.place_market_order(product, amount)
 
                     try:
                         purchase_date = self.next_purchase_date.strftime("%Y-%m-%d")
-                        transaction_details = self.coinbase.get_transaction_details(
-                            product, purchase_date
-                        )
+                        transaction_details = self.coinbase.get_transaction_details(product, purchase_date)
                         if self.coinbase.send_email_confirmation(transaction_details):
                             print("Email confirmation sent!")
 

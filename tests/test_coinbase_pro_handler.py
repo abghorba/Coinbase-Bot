@@ -3,35 +3,21 @@ from datetime import datetime
 import pytest
 
 from src.coinbase.coinbase_bot import CoinbaseExchangeAuth, CoinbaseProHandler
-from src.coinbase.utilities import (
-    CB_API_KEY_TEST,
-    CB_API_PASS_TEST,
-    CB_API_SECRET_TEST,
-    EMAIL_ADDRESS,
-    EMAIL_PASSWORD,
-)
+from src.coinbase.utilities import CB_API_KEY_TEST, CB_API_PASS_TEST, CB_API_SECRET_TEST, EMAIL_ADDRESS, EMAIL_PASSWORD
 
 SANDBOX_API_URL = "https://api-public.sandbox.pro.coinbase.com/"
-NONEMPTY_API_CREDENTIALS = (
-    bool(CB_API_KEY_TEST) and bool(CB_API_PASS_TEST) and bool(CB_API_SECRET_TEST)
-)
+NONEMPTY_API_CREDENTIALS = bool(CB_API_KEY_TEST) and bool(CB_API_PASS_TEST) and bool(CB_API_SECRET_TEST)
 NONEMPTY_EMAIL_CREDENTIALS = bool(EMAIL_ADDRESS) and bool(EMAIL_PASSWORD)
 
 
 class TestCoinbaseProHandler:
-    valid_coinbase_auth = CoinbaseExchangeAuth(
-        CB_API_KEY_TEST, CB_API_SECRET_TEST, CB_API_PASS_TEST
-    )
+    valid_coinbase_auth = CoinbaseExchangeAuth(CB_API_KEY_TEST, CB_API_SECRET_TEST, CB_API_PASS_TEST)
 
-    valid_coinbase_pro = CoinbaseProHandler(
-        api_url=SANDBOX_API_URL, auth=valid_coinbase_auth
-    )
+    valid_coinbase_pro = CoinbaseProHandler(api_url=SANDBOX_API_URL, auth=valid_coinbase_auth)
 
     invalid_coinbase_auth = CoinbaseExchangeAuth("4096", "4096", "4096")
 
-    invalid_coinbase_pro = CoinbaseProHandler(
-        api_url=SANDBOX_API_URL, auth=invalid_coinbase_auth
-    )
+    invalid_coinbase_pro = CoinbaseProHandler(api_url=SANDBOX_API_URL, auth=invalid_coinbase_auth)
 
     todays_date = datetime.today().strftime("%Y-%m-%d")
 
@@ -60,9 +46,7 @@ class TestCoinbaseProHandler:
         with pytest.raises(RuntimeError, match="Could not find payment method"):
             self.invalid_coinbase_pro.get_payment_method()
 
-    @pytest.mark.skipif(
-        not NONEMPTY_API_CREDENTIALS, reason="No API credentials provided"
-    )
+    @pytest.mark.skipif(not NONEMPTY_API_CREDENTIALS, reason="No API credentials provided")
     def test_get_payment_method_valid_auth(self):
         """Checks that get_payment_method() returns a nonempty string if using valid authorization"""
 
@@ -75,9 +59,7 @@ class TestCoinbaseProHandler:
             self.invalid_coinbase_pro.deposit_from_bank(50)
 
     @pytest.mark.skip(reason="deposit_from_bank() is not supported in sandbox mode")
-    @pytest.mark.skipif(
-        not NONEMPTY_API_CREDENTIALS, reason="No API credentials provided"
-    )
+    @pytest.mark.skipif(not NONEMPTY_API_CREDENTIALS, reason="No API credentials provided")
     def test_deposit_from_bank_valid_auth(self):
         """Checks that deposit_from_bank() returns True with valid authorization and parameters"""
 
@@ -101,9 +83,7 @@ class TestCoinbaseProHandler:
         with pytest.raises(RuntimeError, match="Could not place market order: "):
             self.invalid_coinbase_pro.place_market_order("BTC", 50)
 
-    @pytest.mark.skipif(
-        not NONEMPTY_API_CREDENTIALS, reason="No API credentials provided"
-    )
+    @pytest.mark.skipif(not NONEMPTY_API_CREDENTIALS, reason="No API credentials provided")
     def test_place_market_order_valid_auth(self):
         """Checks place_marker_order() returns true with valid authorization and parameters."""
 
@@ -134,15 +114,11 @@ class TestCoinbaseProHandler:
         with pytest.raises(RuntimeError, match="Could not find transaction details"):
             self.invalid_coinbase_pro.get_transaction_details("BTC", self.todays_date)
 
-    @pytest.mark.skipif(
-        not NONEMPTY_API_CREDENTIALS, reason="No API credentials provided"
-    )
+    @pytest.mark.skipif(not NONEMPTY_API_CREDENTIALS, reason="No API credentials provided")
     def test_get_transaction_details_valid_auth(self):
         """Checks that get_transaction_details() returns nonempty dict with valid authorization."""
 
-        details = self.valid_coinbase_pro.get_transaction_details(
-            "BTC", self.todays_date
-        )
+        details = self.valid_coinbase_pro.get_transaction_details("BTC", self.todays_date)
         assert bool(details)
 
     def test_get_transaction_details_invalid_parameters(self):
@@ -167,25 +143,17 @@ class TestCoinbaseProHandler:
             self.invalid_coinbase_pro.get_transaction_details("BTC", "01-31-2022")
             self.invalid_coinbase_pro.get_transaction_details("BTC", "31/01/2022")
 
-    @pytest.mark.skipif(
-        NONEMPTY_EMAIL_CREDENTIALS, reason="Email credentials are provided"
-    )
+    @pytest.mark.skipif(NONEMPTY_EMAIL_CREDENTIALS, reason="Email credentials are provided")
     def test_send_email_confirmation_invalid_email_credentials(self):
         """Checks if send_email_confirmation() return False with invalid email credentials."""
 
-        assert not self.invalid_coinbase_pro.send_email_confirmation(
-            self.sample_valid_transaction_details
-        )
+        assert not self.invalid_coinbase_pro.send_email_confirmation(self.sample_valid_transaction_details)
 
-    @pytest.mark.skipif(
-        not NONEMPTY_EMAIL_CREDENTIALS, reason="No email credentials provided"
-    )
+    @pytest.mark.skipif(not NONEMPTY_EMAIL_CREDENTIALS, reason="No email credentials provided")
     def test_send_email_confirmation_valid_email_credentials(self):
         """Checks if send_email_confirmation() returns True with valid email credentials"""
 
-        assert self.valid_coinbase_pro.send_email_confirmation(
-            self.sample_valid_transaction_details
-        )
+        assert self.valid_coinbase_pro.send_email_confirmation(self.sample_valid_transaction_details)
 
     def test_send_email_confirmation_invalid_parameters(self):
         """Checks if send_email_confirmation() returns correct errors with invalid parameters."""
@@ -199,6 +167,4 @@ class TestCoinbaseProHandler:
             self.invalid_coinbase_pro.send_email_confirmation({})
 
         with pytest.raises(KeyError):
-            self.invalid_coinbase_pro.send_email_confirmation(
-                self.sample_invalid_transaction_details
-            )
+            self.invalid_coinbase_pro.send_email_confirmation(self.sample_invalid_transaction_details)

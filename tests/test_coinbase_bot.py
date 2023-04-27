@@ -9,9 +9,7 @@ from src.coinbase.frequency import FREQUENCY_TO_DAYS
 from src.coinbase.utilities import CB_API_KEY_TEST, CB_API_PASS_TEST, CB_API_SECRET_TEST
 
 SANDBOX_API_URL = "https://api-public.sandbox.pro.coinbase.com/"
-NONEMPTY_API_CREDENTIALS = (
-    bool(CB_API_KEY_TEST) and bool(CB_API_PASS_TEST) and bool(CB_API_SECRET_TEST)
-)
+NONEMPTY_API_CREDENTIALS = bool(CB_API_KEY_TEST) and bool(CB_API_PASS_TEST) and bool(CB_API_SECRET_TEST)
 
 
 @pytest.mark.skipif(not NONEMPTY_API_CREDENTIALS, reason="No API credentials provided")
@@ -42,9 +40,7 @@ class TestCoinbaseBot:
 
     coinbase = CoinbaseBot(
         api_url=SANDBOX_API_URL,
-        auth=CoinbaseExchangeAuth(
-            CB_API_KEY_TEST, CB_API_SECRET_TEST, CB_API_PASS_TEST
-        ),
+        auth=CoinbaseExchangeAuth(CB_API_KEY_TEST, CB_API_SECRET_TEST, CB_API_PASS_TEST),
         frequency=start_frequency,
         start_date=start_date,
         start_time=start_time,
@@ -142,9 +138,7 @@ class TestCoinbaseBot:
             self.coinbase.update_frequency("annually")
 
         self.coinbase.update_deposit_date()
-        assert self.coinbase.next_deposit_date == (
-            next_deposit_date + current_time_delta
-        )
+        assert self.coinbase.next_deposit_date == (next_deposit_date + current_time_delta)
 
         # Need to revert back to original deposit date
         self.coinbase.next_deposit_date = self.first_deposit_date
@@ -178,9 +172,7 @@ class TestCoinbaseBot:
             self.coinbase.update_frequency("annually")
 
         self.coinbase.update_purchase_date()
-        assert self.coinbase.next_purchase_date == (
-            next_purchase_date + current_time_delta
-        )
+        assert self.coinbase.next_purchase_date == (next_purchase_date + current_time_delta)
 
         # Need to revert back to original purchase date
         self.coinbase.next_purchase_date = self.first_purchase_date
@@ -293,11 +285,5 @@ class TestCoinbaseBot:
 
             sleep(thread_timeout_seconds)
 
-            assert (
-                self.coinbase.next_deposit_date
-                == current_deposit_date + self.coinbase.time_delta
-            )
-            assert (
-                self.coinbase.next_purchase_date
-                == current_purchase_date + self.coinbase.time_delta
-            )
+            assert self.coinbase.next_deposit_date == current_deposit_date + self.coinbase.time_delta
+            assert self.coinbase.next_purchase_date == current_purchase_date + self.coinbase.time_delta

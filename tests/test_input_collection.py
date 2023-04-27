@@ -21,12 +21,8 @@ class TestInputCollector:
     new_year_date = date(next_year, 1, 1).strftime("%Y-%m-%d")
 
     current_time = todays_datetime.strftime("%I:%M %p")
-    current_time_minus_one_minute = (todays_datetime + timedelta(minutes=-1)).strftime(
-        "%I:%M %p"
-    )
-    current_time_plus_one_minute = (todays_datetime + timedelta(minutes=1)).strftime(
-        "%I:%M %p"
-    )
+    current_time_minus_one_minute = (todays_datetime + timedelta(minutes=-1)).strftime("%I:%M %p")
+    current_time_plus_one_minute = (todays_datetime + timedelta(minutes=1)).strftime("%I:%M %p")
 
     @pytest.mark.parametrize(
         "date_string,expected",
@@ -90,9 +86,7 @@ class TestInputCollector:
             (current_time_plus_one_minute, True),
         ],
     )
-    def test_is_valid_start_time_if_start_date_is_not_today(
-        self, time_string, expected
-    ):
+    def test_is_valid_start_time_if_start_date_is_not_today(self, time_string, expected):
         """Tests if the input is a valid start time if the valid start date is after today"""
 
         self.input_collector.start_date_is_today = False

@@ -100,9 +100,7 @@ class InputCollector:
             current_time = datetime.now().time()
 
             if converted_time < current_time:
-                print(
-                    "The chosen start date is today. The time of the transaction must occur after the current time."
-                )
+                print("The chosen start date is today. The time of the transaction must occur after the current time.")
                 return False
 
         return True
@@ -117,9 +115,7 @@ class InputCollector:
         valid_start_time = False
 
         while not valid_start_time:
-            start_time = input(
-                "Enter in the time you wish to conduct transactions in format HH:MM XM: "
-            )
+            start_time = input("Enter in the time you wish to conduct transactions in format HH:MM XM: ")
 
             valid_start_time = self.is_valid_start_time(start_time)
 
@@ -143,9 +139,7 @@ class InputCollector:
 
         # Check frequency is valid
         if frequency.lower() not in FREQUENCY_TO_DAYS:
-            print(
-                'Invalid value. Valid values include "daily", "weekly", "biweekly", and "monthly".'
-            )
+            print('Invalid value. Valid values include "daily", "weekly", "biweekly", and "monthly".')
             return False
 
         return True
@@ -243,9 +237,7 @@ class InputCollector:
             valid_crypto = False
 
             while not valid_crypto:
-                crypto = input(
-                    "Enter in the cryprocurrency symbol you wish to purchase: "
-                )
+                crypto = input("Enter in the cryprocurrency symbol you wish to purchase: ")
 
                 valid_crypto = self.is_valid_crypto(crypto)
 

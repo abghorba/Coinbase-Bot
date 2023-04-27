@@ -1,8 +1,4 @@
-from src.coinbase.coinbase_bot import (
-    COINBASE_API_URL,
-    CoinbaseBot,
-    CoinbaseExchangeAuth,
-)
+from src.coinbase.coinbase_bot import COINBASE_API_URL, CoinbaseBot, CoinbaseExchangeAuth
 from src.coinbase.input_collection import InputCollector
 from src.coinbase.utilities import CB_API_KEY, CB_API_PASS, CB_API_SECRET
 
