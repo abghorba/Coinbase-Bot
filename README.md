@@ -7,9 +7,6 @@ This provides a way to Dollar Cost Average into cyptocurrencies.
 
 
 <h2> Configuration </h2>
-Install dependencies by calling
-
-        pip install -r requirements.txt
 
 You will need a Coinbase Pro account. You will also need to
 create an API key via the Coinbase Pro website. Create your API key. 
@@ -49,7 +46,7 @@ After this is done, you can create a virtual environment, install dependencies, 
 
 Run the following command in your CLI to start the program:
 
-                python coinbase_bot.py
+        python coinbase_bot.py
 
 You will be prompted for the following:
 
@@ -66,7 +63,7 @@ The bot will sum the values in the orders and will deposit that amount into your
 Pro account. The market orders will be placed shortly after.
 
 If you set up your email credentials correctly, you will be sent a confirmation once the
-market order has been placed and filled.
+market order has been placed and filled. If you have 2FA enabled for your email, this may not work.
 
 
 <h2> Disclaimer </h2>
