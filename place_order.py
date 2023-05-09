@@ -1,11 +1,11 @@
 from src.coinbase.coinbase_bot import COINBASE_API_URL, CoinbaseBot, CoinbaseExchangeAuth
-from src.coinbase.input_collection import InputCollector
 from src.coinbase.utilities import CB_API_KEY, CB_API_PASS, CB_API_SECRET
+from src.orders.command_line_input_collection import CommandLineInputCollector
 
 
 def main():
     # Grab inputs from the user and check they are valid inputs.
-    user_inputs = InputCollector()
+    user_inputs = CommandLineInputCollector()
     user_inputs.collect_inputs()
 
     coinbase = CoinbaseBot(

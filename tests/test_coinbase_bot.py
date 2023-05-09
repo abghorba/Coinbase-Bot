@@ -250,8 +250,6 @@ class TestCoinbaseBot:
         thread_timeout_seconds = 150
 
         for iteration, frequency in enumerate(FREQUENCY_TO_DAYS, 1):
-            continue
-            print("")
             print(f'Starting iteration {iteration} with frequency="{frequency}"...')
 
             current_datetime = datetime.today().replace(second=0, microsecond=0)
