@@ -1,13 +1,7 @@
 crypto:
   - BTC
-  - ETH
-  - LINK
-  - BTC
-start_date: 2025-01-01
+start_date: 2039-01-01
 start_time: 07:00 AM
 frequency: weekly
 amount_usd:
-  - 150.50
-  - 149.50
-  - 50
-  - 250.5
+  - 100
