@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from src.orders.command_line_input_collection import CommandLineInputCollector
+from src.orders.command_line_input_collector import CommandLineInputCollector
 
 
 class TestInputCollector:
