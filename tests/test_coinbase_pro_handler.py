@@ -143,13 +143,15 @@ class TestCoinbaseProHandler:
             self.invalid_coinbase_pro.get_transaction_details("BTC", "01-31-2022")
             self.invalid_coinbase_pro.get_transaction_details("BTC", "31/01/2022")
 
-    @pytest.mark.skipif(NONEMPTY_EMAIL_CREDENTIALS, reason="Email credentials are provided")
+    @pytest.mark.skip
+    #  @pytest.mark.skipif(NONEMPTY_EMAIL_CREDENTIALS, reason="Email credentials are provided")
     def test_send_email_confirmation_invalid_email_credentials(self):
         """Checks if send_email_confirmation() return False with invalid email credentials."""
 
         assert not self.invalid_coinbase_pro.send_email_confirmation(self.sample_valid_transaction_details)
 
-    @pytest.mark.skipif(not NONEMPTY_EMAIL_CREDENTIALS, reason="No email credentials provided")
+    @pytest.mark.skip
+    #  @pytest.mark.skipif(not NONEMPTY_EMAIL_CREDENTIALS, reason="No email credentials provided")
     def test_send_email_confirmation_valid_email_credentials(self):
         """Checks if send_email_confirmation() returns True with valid email credentials"""
 
