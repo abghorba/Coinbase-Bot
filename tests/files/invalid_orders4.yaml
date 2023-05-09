@@ -1,0 +1,7 @@
+crypto:
+  - BTC
+start_date: 2025-01-01
+start_time: 07:00 AM
+frequency: quarterly
+amount_usd:
+  - 100

@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from src.orders.command_line_input_collection import CommandLineInputCollector
+from src.orders.command_line_input_collector import CommandLineInputCollector
 
 
 class TestInputCollector:
@@ -129,6 +129,7 @@ class TestInputCollector:
             (["GOOG", "BTC", "0", "600", "Y", "BTC", "Y", "400", "N"], {"BTC": 400.00}),
             (["BTC", "666.66", "Y", "BTC", "N", "Y", "BTC", "Y", "300.00", "N"], {"BTC": 300.00}),
             (["BTC", "666.66", "Y", "BTC", "N", "N", "BTC", "300.00", "400", "N"], {"BTC": 666.66}),
+            (["BTC", "333.33", "Y", "LINK", "222.22", "N"], {"BTC": 333.33, "LINK": 222.22}),
         ],
     )
     def test_get_orders(self, list_of_user_inputs, expected):

@@ -1,23 +1,8 @@
-from datetime import datetime
-
-import requests
-
-from src.coinbase.frequency import FREQUENCY_TO_DAYS
+from src.orders.input_collection import InputCollector
 from src.orders.utilities import DataInputVerifier
 
-BASE_URL = "https://api.exchange.coinbase.com/currencies/"
 
-
-class CommandLineInputCollector:
-    def __init__(self):
-        self.start_date_is_today = False
-
-        # collect_inputs()
-        self.start_date = None
-        self.start_time = None
-        self.frequency = None
-        self.orders = None
-
+class CommandLineInputCollector(InputCollector):
     def get_start_date(self):
         """
         Checks if the start date the user inputs is valid.
@@ -29,7 +14,6 @@ class CommandLineInputCollector:
         start_date = None
 
         while not valid_date:
-            print(1)
             start_date = input("Enter in the start date in format YYYY-MM-DD: ")
             valid_date = DataInputVerifier.is_valid_date_string(start_date)
 
