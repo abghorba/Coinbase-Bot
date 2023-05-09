@@ -29,6 +29,7 @@ def main():
     coinbase.set_orders(**user_inputs.orders)
 
     try:
+        print(coinbase.orders)
         coinbase.activate()
     except Exception:
         print("There was an error placing your order")

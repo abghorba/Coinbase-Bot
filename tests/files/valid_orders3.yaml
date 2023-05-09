@@ -1,0 +1,11 @@
+crypto:
+  - BTC
+  - ETH
+  - LINK
+start_date: 2027-12-31
+start_time: 3:32 AM
+frequency: biweekly
+amount_usd:
+  - 432.12
+  - 377.99
+  - 50
