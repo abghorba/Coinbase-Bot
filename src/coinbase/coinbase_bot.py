@@ -11,7 +11,7 @@ import requests
 from requests.auth import AuthBase
 
 from src.coinbase.frequency import FREQUENCY_TO_DAYS
-from src.coinbase.utilities import EMAIL_ADDRESS, EMAIL_PASSWORD
+from src.coinbase.utilities import EmailCredentials
 
 COINBASE_API_URL = "https://api.pro.coinbase.com/"
 
@@ -48,6 +48,7 @@ class CoinbaseProHandler:
     def __init__(self, api_url, auth):
         self.api_url = api_url
         self.auth = auth
+        self.email = EmailCredentials()
 
     def get_payment_method(self):
         """
@@ -171,7 +172,7 @@ class CoinbaseProHandler:
         """
         Retrieves the JSON response of the transaction details.
 
-        :param product: The cyptocurrency to get transaction details of as a string
+        :param product: The cryptocurrency to get transaction details of as a string
         :param start_date: String in "yyyy-mm-dd" format
         :return: Extracted details from the retrieved JSON as a dict
         """
@@ -242,8 +243,8 @@ class CoinbaseProHandler:
 
         msg = EmailMessage()
         msg["Subject"] = f"Your Purchase of ${total_amount} of {product} Was Successful!"
-        msg["From"] = EMAIL_ADDRESS
-        msg["To"] = EMAIL_ADDRESS
+        msg["From"] = self.email.email_address
+        msg["To"] = self.email.email_address
 
         content = f"Hello,\n\n You successfully placed your order! Please see below details:\n\n \
             Amount Purchased: {purchase_amount} {product}\n \
@@ -257,7 +258,7 @@ class CoinbaseProHandler:
 
         try:
             with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
-                smtp.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+                smtp.login(self.email.email_address, self.email.password)
                 smtp.send_message(msg)
                 return True
 
@@ -276,32 +277,32 @@ class CoinbaseBot:
         self.next_deposit_date = self.next_purchase_date + timedelta(minutes=-1)
         self.orders = orders
 
-    def parse_to_datetime(self, date, time):
+    def parse_to_datetime(self, date, time_):
         """
         Parses both a date string and a time string into one datetime object.
 
         :param date: The date string in format YYYY-MM-DD
-        :param time: The time string in format HH:MM XM
+        :param time_: The time string in format HH:MM XM
         :return: datetime object representing the passed in date and time strings
         """
 
         if not isinstance(date, str):
             raise TypeError("ERROR: date must be of type str")
 
-        if not isinstance(time, str):
-            raise TypeError("ERROR: time must be of type str")
+        if not isinstance(time_, str):
+            raise TypeError("ERROR: time_ must be of type str")
 
         if not date:
             raise ValueError("ERROR: date cannot be null")
 
-        if not time:
+        if not time_:
             raise ValueError("ERROR: time cannot be null")
 
         # Raises a ValueError is not in the correct formats
         datetime.strptime(date, "%Y-%m-%d")
-        datetime.strptime(time, "%I:%M %p")
+        datetime.strptime(time_, "%I:%M %p")
 
-        date_and_time = date + " " + time
+        date_and_time = date + " " + time_
         date_and_time = datetime.strptime(date_and_time, "%Y-%m-%d %I:%M %p")
 
         return date_and_time
@@ -350,7 +351,7 @@ class CoinbaseBot:
         """
         Sets the orders for recurring purchases.
 
-        :param **kwargs: Any number of key-value pairs for product to amount.
+        :param kwargs: Any number of key-value pairs for product to amount.
             Ex. {"BTC": 20, "ETH": 20, "ADA": 20}
         :return: None
         """

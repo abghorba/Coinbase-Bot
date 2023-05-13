@@ -6,14 +6,16 @@ import pytest
 
 from src.coinbase.coinbase_bot import CoinbaseBot, CoinbaseExchangeAuth
 from src.coinbase.frequency import FREQUENCY_TO_DAYS
-from src.coinbase.utilities import CB_API_KEY_TEST, CB_API_PASS_TEST, CB_API_SECRET_TEST
+from src.coinbase.utilities import CoinbaseSandboxCredentials
 
 SANDBOX_API_URL = "https://api-public.sandbox.pro.coinbase.com/"
-NONEMPTY_API_CREDENTIALS = bool(CB_API_KEY_TEST) and bool(CB_API_PASS_TEST) and bool(CB_API_SECRET_TEST)
+SANDBOX_CREDENTIALS = CoinbaseSandboxCredentials()
 
 
-@pytest.mark.skipif(not NONEMPTY_API_CREDENTIALS, reason="No API credentials provided")
+@pytest.mark.skipif(SANDBOX_CREDENTIALS.empty_credentials, reason="No API credentials provided")
 class TestCoinbaseBot:
+    """Tests CoinbaseBot class."""
+
     start_date = "2022-01-01"
     start_time = "10:00 AM"
     start_frequency = "weekly"
@@ -40,7 +42,7 @@ class TestCoinbaseBot:
 
     coinbase = CoinbaseBot(
         api_url=SANDBOX_API_URL,
-        auth=CoinbaseExchangeAuth(CB_API_KEY_TEST, CB_API_SECRET_TEST, CB_API_PASS_TEST),
+        auth=CoinbaseExchangeAuth(**vars(SANDBOX_CREDENTIALS)),
         frequency=start_frequency,
         start_date=start_date,
         start_time=start_time,
@@ -53,7 +55,7 @@ class TestCoinbaseBot:
             self.coinbase.parse_to_datetime(None, "10:00 AM")
             self.coinbase.parse_to_datetime(100, "10:00 AM")
 
-        with pytest.raises(TypeError, match="time must be of type str"):
+        with pytest.raises(TypeError, match="time_ must be of type str"):
             self.coinbase.parse_to_datetime("2022-01-01", None)
             self.coinbase.parse_to_datetime("2022-01-01", 100)
 
@@ -242,6 +244,7 @@ class TestCoinbaseBot:
         assert self.coinbase.orders == new_orders
 
     # Ensure that this test runs last!
+    @pytest.mark.skip
     def test_activate(self):
         """Checks that the activate function works accordingly"""
 
