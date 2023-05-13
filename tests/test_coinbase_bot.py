@@ -244,7 +244,6 @@ class TestCoinbaseBot:
         assert self.coinbase.orders == new_orders
 
     # Ensure that this test runs last!
-    @pytest.mark.skip
     def test_activate(self):
         """Checks that the activate function works accordingly"""
 
